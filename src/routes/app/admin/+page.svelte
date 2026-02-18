@@ -3,7 +3,7 @@
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
   import { supabase } from '$lib/supabaseClient';
-  import { enforceAllowlist } from '$lib/session';
+  import { enforceAllowlist, getCurrentUser } from '$lib/session';
 
   type Closure = { day: string; note: string | null };
 
@@ -69,8 +69,8 @@
   }
 
   async function saveWarning() {
-    const { data: userData } = await supabase.auth.getUser();
-    const updated_by = userData.user?.id;
+    const currentUser = await getCurrentUser();
+    const updated_by = currentUser?.id;
 
     if (!warning.trim()) {
       const { error: deleteError } = await supabase.from('app_config').delete().eq('key', 'homepage_warning');
