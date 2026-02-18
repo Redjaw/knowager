@@ -18,13 +18,8 @@
   let message = '';
   let error = '';
   let loading = true;
-  let calendarCursor = startOfMonth(new Date());
-
-  const today = new Date();
   const initialDate = new Date();
-  
-  let calendarYear = initialDate.getFullYear();
-  let calendarMonth = initialDate.getMonth();
+  let calendarCursor = new Date(initialDate.getFullYear(), initialDate.getMonth(), 1);
 
   onMount(async () => {
     const allow = await enforceAllowlist();
@@ -100,28 +95,20 @@
   }
 
   function monthLabel() {
-    return new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' }).format(new Date(calendarYear, calendarMonth, 1));
+    return new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' }).format(calendarCursor);
   }
 
   function monthPrefix() {
-    const month = `${calendarMonth + 1}`.padStart(2, '0');
-    return `${calendarYear}-${month}`;
+    const month = `${calendarCursor.getMonth() + 1}`.padStart(2, '0');
+    return `${calendarCursor.getFullYear()}-${month}`;
   }
 
   function previousMonth() {
-    calendarMonth -= 1;
-    if (calendarMonth < 0) {
-      calendarMonth = 11;
-      calendarYear -= 1;
-    }
+    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() - 1, 1);
   }
 
   function nextMonth() {
-    calendarMonth += 1;
-    if (calendarMonth > 11) {
-      calendarMonth = 0;
-      calendarYear += 1;
-    }
+    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 1);
   }
 
   function closureByDay(day: string) {
@@ -143,7 +130,9 @@
   }
 
   function calendarCells() {
-    const firstDay = new Date(calendarYear, calendarMonth, 1);
+    const currentYear = calendarCursor.getFullYear();
+    const currentMonth = calendarCursor.getMonth();
+    const firstDay = new Date(currentYear, currentMonth, 1);
     const mondayBasedStart = (firstDay.getDay() + 6) % 7;
     const gridStart = new Date(firstDay);
     gridStart.setDate(firstDay.getDate() - mondayBasedStart);
@@ -155,7 +144,7 @@
       return {
         day,
         dateNumber: date.getDate(),
-        inMonth: date.getMonth() === calendarMonth,
+        inMonth: date.getMonth() === currentMonth,
         isToday: day === toDateKey(new Date()),
         closure: closureByDay(day)
       };
