@@ -28,6 +28,10 @@
   let calendarYear = today.getFullYear();
   let calendarMonth = today.getMonth();
 
+  const initialDate = new Date();
+  let calendarYear = initialDate.getFullYear();
+  let calendarMonth = initialDate.getMonth();
+
   onMount(async () => {
     const allow = await enforceAllowlist();
     if (!allow.admin) {
