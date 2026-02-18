@@ -20,6 +20,10 @@
   let loading = true;
   let calendarCursor = startOfMonth(new Date());
 
+  const today = new Date();
+  let calendarYear = today.getFullYear();
+  let calendarMonth = today.getMonth();
+
   onMount(async () => {
     const allow = await enforceAllowlist();
     if (!allow.admin) {
@@ -86,10 +90,6 @@
     return 'bg-slate-100 text-slate-700 border-slate-200';
   }
 
-  function startOfMonth(value: Date) {
-    return new Date(value.getFullYear(), value.getMonth(), 1);
-  }
-
   function toDateKey(value: Date) {
     const year = value.getFullYear();
     const month = `${value.getMonth() + 1}`.padStart(2, '0');
@@ -98,20 +98,28 @@
   }
 
   function monthLabel() {
-    return new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' }).format(calendarCursor);
+    return new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' }).format(new Date(calendarYear, calendarMonth, 1));
   }
 
   function monthPrefix() {
-    const month = `${calendarCursor.getMonth() + 1}`.padStart(2, '0');
-    return `${calendarCursor.getFullYear()}-${month}`;
+    const month = `${calendarMonth + 1}`.padStart(2, '0');
+    return `${calendarYear}-${month}`;
   }
 
   function previousMonth() {
-    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() - 1, 1);
+    calendarMonth -= 1;
+    if (calendarMonth < 0) {
+      calendarMonth = 11;
+      calendarYear -= 1;
+    }
   }
 
   function nextMonth() {
-    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 1);
+    calendarMonth += 1;
+    if (calendarMonth > 11) {
+      calendarMonth = 0;
+      calendarYear += 1;
+    }
   }
 
   function closureByDay(day: string) {
@@ -133,7 +141,7 @@
   }
 
   function calendarCells() {
-    const firstDay = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth(), 1);
+    const firstDay = new Date(calendarYear, calendarMonth, 1);
     const mondayBasedStart = (firstDay.getDay() + 6) % 7;
     const gridStart = new Date(firstDay);
     gridStart.setDate(firstDay.getDate() - mondayBasedStart);
@@ -145,7 +153,7 @@
       return {
         day,
         dateNumber: date.getDate(),
-        inMonth: date.getMonth() === calendarCursor.getMonth(),
+        inMonth: date.getMonth() === calendarMonth,
         isToday: day === toDateKey(new Date()),
         closure: closureByDay(day)
       };

@@ -8,7 +8,7 @@
   type Selection = { day: string; user_id: string };
   type ClosureColor = 'gray' | 'yellow' | 'red';
   type Closure = { day: string; note: string | null; color: ClosureColor | null };
-  type PublicProfile = { id: string; first_name: string | null; last_name: string | null; email: string | null };
+  type PublicProfile = { id: string; first_name: string | null; last_name: string | null; email: string | null; birth_date: string | null };
 
   const dayLabels = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 
@@ -84,7 +84,7 @@
         return;
       }
 
-      const profileRes = await supabase.from('profiles').select('id,first_name,last_name,email').in('id', ids);
+      const profileRes = await supabase.from('profiles').select('id,first_name,last_name,email,birth_date').in('id', ids);
       if (profileRes.error) {
         errorMessage = profileRes.error.message;
         return;
@@ -177,6 +177,17 @@
 
   function profileName(profile?: PublicProfile) {
     return `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || profile?.email || 'Utente';
+  }
+
+  function birthdaysForDay(day: WeekDay) {
+    const month = `${day.date.getMonth() + 1}`.padStart(2, '0');
+    const date = `${day.date.getDate()}`.padStart(2, '0');
+
+    return dayMembers(day.key)
+      .map((member) => profiles.get(member.user_id))
+      .filter((profile): profile is PublicProfile => Boolean(profile?.birth_date))
+      .filter((profile) => profile.birth_date?.slice(5, 10) === `${month}-${date}`)
+      .map((profile) => profileName(profile));
   }
 
   function cardCanToggle(day: WeekDay) {
@@ -315,6 +326,11 @@
             </div>
 
             <p class="mt-4 text-sm font-medium text-slate-700">{dayStatus(day)}</p>
+
+            {@const birthdays = birthdaysForDay(day)}
+            {#if birthdays.length > 0}
+              <p class="mt-2 rounded-lg bg-pink-100 px-2 py-1 text-xs font-semibold text-pink-700">🎂 Compleanno: {birthdays.join(', ')}</p>
+            {/if}
 
             <div class="mt-auto border-t border-slate-200 pt-3">
               <div class="mt-2 flex items-center">
