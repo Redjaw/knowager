@@ -19,11 +19,7 @@
       {#if data.isAdmin}
         <a href={`${base}/app/admin`}>Admin</a>
       {/if}
-<<<<<<< codex/implement-project-as-described-in-plans.md-vbkc00
-      <button onclick={logout}>Esci</button>
-=======
       <button on:click={logout}>Esci</button>
->>>>>>> main
     </nav>
   </header>
   <main>{@render children()}</main>
