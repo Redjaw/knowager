@@ -46,78 +46,34 @@
 </script>
 
 <svelte:head>
-  <title>Knowager - Login</title>
+  <title>Knowager - Accesso</title>
 </svelte:head>
 
-<main class="login-page">
-  <section class="card">
-    <h1>Knowager</h1>
-    <p class="subtitle">Accedi con magic link</p>
+<main class="grid min-h-screen place-items-center p-4">
+  <section class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h1 class="text-3xl font-bold text-slate-900">Knowager</h1>
+    <p class="mt-1 text-slate-600">Accedi con magic link</p>
 
-    <form
-      on:submit|preventDefault={sendLink}
-    >
-      <label for="email">Email</label>
-      <input id="email" type="email" bind:value={email} placeholder="nome@email.com" required />
-      <button type="submit" disabled={loading || !email}>{loading ? 'Invio in corso...' : 'Invia link'}</button>
+    <form class="mt-5 grid gap-3" on:submit|preventDefault={sendLink}>
+      <label class="text-sm font-medium text-slate-700" for="email">Email</label>
+      <input
+        class="rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2"
+        id="email"
+        type="email"
+        bind:value={email}
+        placeholder="nome@email.com"
+        required
+      />
+      <button class="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={loading || !email}>
+        {loading ? 'Invio in corso...' : 'Invia link'}
+      </button>
     </form>
 
     {#if statusMessage}
-      <p class="status">{statusMessage}</p>
+      <p class="mt-4 text-sm font-medium text-green-700">{statusMessage}</p>
     {/if}
     {#if errorMessage}
-      <p class="error">{errorMessage}</p>
+      <p class="mt-4 text-sm font-medium text-red-700">{errorMessage}</p>
     {/if}
   </section>
 </main>
-
-<style>
-  .login-page {
-    min-height: 100vh;
-    display: grid;
-    place-items: center;
-    padding: 1rem;
-  }
-  .card {
-    width: min(420px, 100%);
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    border: 1px solid #e5e7eb;
-  }
-  h1 {
-    margin: 0;
-    font-size: 1.8rem;
-  }
-  .subtitle {
-    margin: 0.25rem 0 1rem;
-    color: #6b7280;
-  }
-  form {
-    display: grid;
-    gap: 0.75rem;
-  }
-  input,
-  button {
-    border-radius: 8px;
-    border: 1px solid #d1d5db;
-    padding: 0.7rem 0.85rem;
-    font: inherit;
-  }
-  button {
-    background: #111827;
-    color: white;
-    border-color: #111827;
-    cursor: pointer;
-  }
-  button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-  .status {
-    color: #166534;
-  }
-  .error {
-    color: #b91c1c;
-  }
-</style>
