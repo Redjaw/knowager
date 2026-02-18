@@ -36,10 +36,13 @@ export async function initSession() {
   user.set(data.session?.user ?? null);
   await checkAllowlist(data.session?.user?.email);
 
-  supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+  supabase.auth.onAuthStateChange((_event, nextSession) => {
     session.set(nextSession);
     user.set(nextSession?.user ?? null);
-    await checkAllowlist(nextSession?.user?.email);
+
+    setTimeout(() => {
+      void checkAllowlist(nextSession?.user?.email);
+    }, 0);
   });
 }
 
