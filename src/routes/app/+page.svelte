@@ -102,11 +102,6 @@
     return isMine(day.key) ? 'Available' : 'Not set';
   }
 
-  function locationText(day: WeekDay) {
-    if (!isMine(day.key)) return '';
-    return day.date.getDay() % 2 === 0 ? 'Office · Desk 4B' : 'Remote';
-  }
-
   function profileName(profile?: PublicProfile) {
     return `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || 'User';
   }
@@ -220,13 +215,7 @@
           </div>
 
           <div class="content-row">
-            {#if mine && !disabled}
-              <span class="pill">Available</span>
-            {/if}
             <p class="state">{dayStatus(day)}</p>
-            {#if locationText(day)}
-              <p class="meta">{locationText(day)}</p>
-            {/if}
           </div>
 
           <div class="members">
@@ -254,18 +243,6 @@
         </button>
       {/each}
     </section>
-
-    <footer class="page-footer">
-      <div class="legend">
-        <span><i class="blue"></i>Available</span>
-        <span><i class="white"></i>Unavailable</span>
-        <span><i class="gray"></i>Past</span>
-      </div>
-      <div class="footer-actions">
-        <button type="button" class="link" onclick={() => moveWeek(0)}>Reset Week</button>
-        <button type="button" class="primary">Save Changes</button>
-      </div>
-    </footer>
   {/if}
 </section>
 
