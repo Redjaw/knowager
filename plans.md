@@ -31,7 +31,7 @@ Nessun backend custom.
 - Applicazione completamente statica (compatibile GitHub Pages)
 - Tutta la sicurezza deve essere implementata tramite RLS nel database
 - Vietato usare service_role nel frontend
-- Usare solo VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY
+- Usare solo PUBLIC_SUPABASE_URL e PUBLIC_SUPABASE_ANON_KEY
 - Supportare BASE_PATH per GitHub repo pages
 - Gestire refresh su rotte interne tramite fallback 404.html
 - UI responsive (mobile-first)
@@ -227,8 +227,8 @@ Regole:
 
 Richieste:
 
-VITE_SUPABASE_URL  
-VITE_SUPABASE_ANON_KEY  
+PUBLIC_SUPABASE_URL  
+PUBLIC_SUPABASE_ANON_KEY  
 BASE_PATH  
 
 ---

@@ -20,8 +20,8 @@ npm install
 2. Crea `.env`:
 
 ```bash
-VITE_SUPABASE_URL=https://<project-ref>.supabase.co
-VITE_SUPABASE_ANON_KEY=<anon-key>
+PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 BASE_PATH=
 ```
 
@@ -55,7 +55,7 @@ set is_admin = excluded.is_admin;
 
 ## Note RLS
 
-- L'app usa solo `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` lato client.
+- L'app usa solo `PUBLIC_SUPABASE_URL` e `PUBLIC_SUPABASE_ANON_KEY` lato client.
 - Le policy si basano su `auth.jwt()->>'email'` per whitelist/admin (`is_allowed_user`, `is_admin_user`).
 - `profiles_public` è una vista con campi minimi (`id`, `first_name`, `last_name`, `avatar_id`) per homepage, evitando esposizione di `birth_date` ad altri utenti.
 
@@ -72,8 +72,8 @@ Workflow: `.github/workflows/deploy.yml`
 
 Nel repository GitHub, **Settings > Secrets and variables > Actions**:
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+- `PUBLIC_SUPABASE_URL`
+- `PUBLIC_SUPABASE_ANON_KEY`
 
 ### BASE_PATH
 
