@@ -3,6 +3,7 @@
   import { getCurrentWeek, type WeekDay, toDateKey } from '$lib/dateUtils';
   import { supabase } from '$lib/supabaseClient';
   import { gravatarUrl } from '$lib/gravatar';
+  import { getCurrentUser } from '$lib/session';
 
   type Selection = { day: string; user_id: string };
   type Closure = { day: string; note: string | null };
@@ -29,8 +30,13 @@
     errorMessage = '';
     week = getCurrentWeek(referenceDate);
 
-    const { data: userData } = await supabase.auth.getUser();
-    currentUserId = userData.user?.id ?? '';
+    const currentUser = await getCurrentUser();
+    currentUserId = currentUser?.id ?? '';
+    if (!currentUserId) {
+      errorMessage = 'Sessione scaduta. Ricarica la pagina per continuare.';
+      loading = false;
+      return;
+    }
     const days = week.map((d) => d.key);
 
     const [selectionsRes, closuresRes, warningRes] = await Promise.all([
