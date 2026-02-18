@@ -327,9 +327,8 @@
 
             <p class="mt-4 text-sm font-medium text-slate-700">{dayStatus(day)}</p>
 
-            {@const birthdays = birthdaysForDay(day)}
-            {#if birthdays.length > 0}
-              <p class="mt-2 rounded-lg bg-pink-100 px-2 py-1 text-xs font-semibold text-pink-700">🎂 Compleanno: {birthdays.join(', ')}</p>
+            {#if birthdaysForDay(day).length > 0}
+              <p class="mt-2 rounded-lg bg-pink-100 px-2 py-1 text-xs font-semibold text-pink-700">🎂 {birthdaysForDay(day).join(', ')}</p>
             {/if}
 
             <div class="mt-auto border-t border-slate-200 pt-3">
