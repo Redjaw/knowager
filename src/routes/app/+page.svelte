@@ -215,12 +215,11 @@
           <p class="mt-4 text-sm font-medium text-slate-700">{dayStatus(day)}</p>
 
           <div class="mt-auto border-t border-slate-200 pt-3">
-            <p class="text-sm text-slate-600">
-              {members.length === 0 ? 'Nessun collega disponibile' : `${members.length} colleghi disponibili`}
-            </p>
             <div class="mt-2 flex items-center">
-              {#if members.length === 0}
+              {#if members.length === 0 && !disabled}
                 <span class="grid h-8 w-8 place-items-center rounded-full border border-dashed border-slate-300 text-slate-400">+</span>
+              {:else if members.length === 0 && disabled}
+                <span class="grid h-8 w-8 place-items-center rounded-full border border-slate-300 text-slate-400">-</span>
               {:else}
                 {#each members.slice(0, 4) as member}
                   {@const profile = profiles.get(member.user_id)}
