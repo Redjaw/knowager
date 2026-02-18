@@ -58,6 +58,7 @@ for each row
 execute procedure public.set_updated_at();
 
 create or replace view public.profiles_public as
+<<<<<<< codex/implement-project-as-described-in-plans.md-vbkc00
 select
   id,
   first_name,
@@ -68,4 +69,7 @@ select
       'https://www.gravatar.com/avatar/' || md5(lower(trim(email))) || '?d=identicon&s=64'
     else null
   end as gravatar_url
+=======
+select id, first_name, last_name, avatar_id
+>>>>>>> main
 from public.profiles;

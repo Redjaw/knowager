@@ -119,7 +119,7 @@
           {#each closures as closure}
             <li>
               <span>{closure.day} {closure.note ? `— ${closure.note}` : ''}</span>
-              <button onclick={() => removeClosure(closure.day)}>Rimuovi</button>
+              <button on:click={() => removeClosure(closure.day)}>Rimuovi</button>
             </li>
           {/each}
         {/if}
@@ -129,7 +129,7 @@
     <article class="card">
       <h2>Warning homepage</h2>
       <textarea rows="5" bind:value={warning} placeholder="Testo warning"></textarea>
-      <button onclick={saveWarning}>Salva warning</button>
+      <button on:click={saveWarning}>Salva warning</button>
     </article>
   </section>
 {/if}

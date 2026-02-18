@@ -18,8 +18,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
+<<<<<<< codex/implement-project-as-described-in-plans.md-vbkc00
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+=======
+      PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+      PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+>>>>>>> main
       BASE_PATH: /${{ github.event.repository.name }}
     steps:
       - name: Checkout
