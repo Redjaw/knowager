@@ -1,3 +1,10 @@
+<<<<<<< codex/implement-project-as-described-in-plans.md-vbkc00
+<script lang="ts">
+  import '../app.css';
+</script>
+
+<slot />
+=======
 <slot />
 
 <style>
@@ -16,3 +23,4 @@
     color: inherit;
   }
 </style>
+>>>>>>> main
