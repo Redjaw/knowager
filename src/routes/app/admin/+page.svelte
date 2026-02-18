@@ -32,7 +32,7 @@
     ]);
 
     if (closuresRes.error || warningRes.error) {
-      error = closuresRes.error?.message || warningRes.error?.message || 'Errore caricamento';
+      error = closuresRes.error?.message || warningRes.error?.message || 'Errore di caricamento';
       loading = false;
       return;
     }
@@ -53,7 +53,7 @@
       return;
     }
 
-    message = 'Chiusura salvata';
+    message = 'Chiusura salvata.';
     newDay = '';
     newNote = '';
     await loadAll();
@@ -78,7 +78,7 @@
         error = deleteError.message;
         return;
       }
-      message = 'Warning rimosso';
+      message = 'Avviso rimosso.';
       await loadAll();
       return;
     }
@@ -94,102 +94,75 @@
       return;
     }
 
-    message = 'Warning aggiornato';
+    message = 'Avviso aggiornato.';
     await loadAll();
   }
 </script>
 
-<svelte:head><title>Knowager - Admin</title></svelte:head>
+<svelte:head><title>Knowager - Amministrazione</title></svelte:head>
 
-{#if loading}
-  <p>Caricamento...</p>
-{:else}
-  <section class="grid">
-    <article class="card">
-      <h2>Giorni non selezionabili</h2>
-      <form class="inline" on:submit|preventDefault={addClosure}>
-        <input type="date" bind:value={newDay} required />
-        <input placeholder="Nota opzionale" bind:value={newNote} />
-        <button type="submit">Aggiungi</button>
-      </form>
-      <ul>
-        {#if closures.length === 0}
-          <li>Nessuna chiusura impostata.</li>
-        {:else}
-          {#each closures as closure}
-            <li>
-              <span>{closure.day} {closure.note ? `— ${closure.note}` : ''}</span>
-              <button on:click={() => removeClosure(closure.day)}>Rimuovi</button>
-            </li>
-          {/each}
-        {/if}
-      </ul>
-    </article>
+<section class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8">
+  <header class="mb-6 flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h1 class="text-4xl font-bold tracking-tight text-slate-900">Impostazioni amministrazione</h1>
+      <p class="mt-2 text-slate-600">Gestisci avvisi globali e vincoli di calendario per tutta l'organizzazione.</p>
+    </div>
+    <button class="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700" type="button" on:click={saveWarning}>Salva modifiche</button>
+  </header>
 
-    <article class="card">
-      <h2>Warning homepage</h2>
-      <textarea rows="5" bind:value={warning} placeholder="Testo warning"></textarea>
-      <button on:click={saveWarning}>Salva warning</button>
-    </article>
-  </section>
-{/if}
+  {#if loading}
+    <p class="text-slate-600">Caricamento...</p>
+  {:else}
+    <div class="space-y-6">
+      <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 class="text-2xl font-semibold text-slate-900">Avviso globale</h2>
+            <p class="text-slate-600">Questo messaggio sarà mostrato in evidenza nella pagina disponibilità.</p>
+          </div>
+          <span class={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ${warning.trim() ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+            {warning.trim() ? 'Attivo' : 'Disattivo'}
+          </span>
+        </div>
+        <label class="mb-2 block text-sm font-medium text-slate-700" for="warning">Contenuto messaggio</label>
+        <textarea
+          id="warning"
+          rows="4"
+          bind:value={warning}
+          placeholder="Es: L'ufficio sarà chiuso dal 10 al 12 agosto."
+          class="w-full rounded-xl border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2"
+        ></textarea>
+      </article>
 
-{#if message}<p class="ok">{message}</p>{/if}
-{#if error}<p class="error">{error}</p>{/if}
+      <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-2xl font-semibold text-slate-900">Chiusure calendario</h2>
+        <p class="mb-4 text-slate-600">Aggiungi i giorni non selezionabili, includendo il motivo da mostrare agli utenti.</p>
 
-<style>
-  .grid {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: 1fr;
-  }
-  .card {
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    padding: 1rem;
-  }
-  .inline {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-  }
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    gap: 0.5rem;
-  }
-  li {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.75rem;
-    border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 0.4rem;
-  }
-  textarea,
-  input,
-  button {
-    font: inherit;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    padding: 0.55rem 0.7rem;
-    background: white;
-  }
-  .ok {
-    color: #166534;
-  }
-  .error {
-    color: #b91c1c;
-  }
-  @media (min-width: 900px) {
-    .grid {
-      grid-template-columns: 1fr 1fr;
-    }
-    .inline {
-      grid-template-columns: 180px 1fr auto;
-    }
-  }
-</style>
+        <form class="mb-4 grid gap-3 md:grid-cols-[180px_1fr_auto]" on:submit|preventDefault={addClosure}>
+          <input class="rounded-xl border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2" type="date" bind:value={newDay} required />
+          <input class="rounded-xl border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2" placeholder="Motivo (es. Ferragosto)" bind:value={newNote} />
+          <button class="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-700" type="submit">Aggiungi</button>
+        </form>
+
+        <ul class="divide-y divide-slate-100">
+          {#if closures.length === 0}
+            <li class="py-3 text-slate-500">Nessuna chiusura impostata.</li>
+          {:else}
+            {#each closures as closure}
+              <li class="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p class="font-medium text-slate-900">{closure.day}</p>
+                  <p class="text-sm text-slate-600">{closure.note?.trim() ? closure.note : 'Nessun motivo specificato'}</p>
+                </div>
+                <button class="w-fit rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50" on:click={() => removeClosure(closure.day)}>Rimuovi</button>
+              </li>
+            {/each}
+          {/if}
+        </ul>
+      </article>
+    </div>
+  {/if}
+
+  {#if message}<p class="mt-4 text-sm font-medium text-green-700">{message}</p>{/if}
+  {#if error}<p class="mt-4 text-sm font-medium text-red-700">{error}</p>{/if}
+</section>
