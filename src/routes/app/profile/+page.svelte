@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { supabase } from '$lib/supabaseClient';
   import { gravatarUrl } from '$lib/gravatar';
+  import { getCurrentUser } from '$lib/session';
 
   let first_name = '';
   let last_name = '';
@@ -12,9 +13,12 @@
   let loading = true;
 
   onMount(async () => {
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
-    if (!user) return;
+    const user = await getCurrentUser();
+    if (!user) {
+      error = 'Sessione scaduta. Ricarica la pagina per continuare.';
+      loading = false;
+      return;
+    }
 
     email = user.email ?? '';
 
@@ -45,9 +49,12 @@
     status = '';
     error = '';
 
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
-    if (!user) return;
+    const user = await getCurrentUser();
+    if (!user) {
+      error = 'Sessione scaduta. Ricarica la pagina per continuare.';
+      loading = false;
+      return;
+    }
 
     const { error: saveError } = await supabase.from('profiles').upsert({
       id: user.id,
