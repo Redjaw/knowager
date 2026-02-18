@@ -1,9 +1,5 @@
-const weekdayFormatter = new Intl.DateTimeFormat('it-IT', {
-  weekday: 'short'
-});
-
-const monthFormatter = new Intl.DateTimeFormat('it-IT', {
-  month: 'short'
+const formatter = new Intl.DateTimeFormat('it-IT', {
+  weekday: 'long'
 });
 
 export type WeekDay = {
@@ -11,7 +7,6 @@ export type WeekDay = {
   key: string;
   dayNumber: number;
   label: string;
-  isWeekend: boolean;
 };
 
 export function toDateKey(date: Date): string {
@@ -21,46 +16,22 @@ export function toDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export function startOfWeek(reference = new Date()): Date {
+export function getCurrentWeek(reference = new Date()): WeekDay[] {
   const date = new Date(reference);
   const day = date.getDay();
   const mondayOffset = day === 0 ? -6 : 1 - day;
   date.setDate(date.getDate() + mondayOffset);
   date.setHours(0, 0, 0, 0);
-  return date;
-}
-
-export function getWeekByOffset(offset = 0, reference = new Date()): WeekDay[] {
-  const firstDay = startOfWeek(reference);
-  firstDay.setDate(firstDay.getDate() + offset * 7);
 
   return Array.from({ length: 7 }, (_, index) => {
-    const current = new Date(firstDay);
-    current.setDate(firstDay.getDate() + index);
-    const weekday = weekdayFormatter.format(current).replace('.', '');
-    const dayOfWeek = current.getDay();
-
+    const current = new Date(date);
+    current.setDate(date.getDate() + index);
+    const weekday = formatter.format(current);
     return {
       date: current,
       key: toDateKey(current),
       dayNumber: current.getDate(),
-      label: weekday.toUpperCase(),
-      isWeekend: dayOfWeek === 0 || dayOfWeek === 6
+      label: weekday.charAt(0).toUpperCase() + weekday.slice(1)
     };
   });
-}
-
-export function formatWeekRange(days: WeekDay[]): string {
-  if (!days.length) return '';
-
-  const start = days[0].date;
-  const end = days[days.length - 1].date;
-  const startMonth = monthFormatter.format(start);
-  const endMonth = monthFormatter.format(end);
-
-  if (start.getMonth() === end.getMonth()) {
-    return `${start.getDate()} - ${end.getDate()} ${endMonth}`;
-  }
-
-  return `${start.getDate()} ${startMonth} - ${end.getDate()} ${endMonth}`;
 }
