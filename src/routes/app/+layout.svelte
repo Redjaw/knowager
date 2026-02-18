@@ -19,7 +19,7 @@
       {#if data.isAdmin}
         <a href={`${base}/app/admin`}>Admin</a>
       {/if}
-      <button onclick={logout}>Esci</button>
+      <button on:click={logout}>Esci</button>
     </nav>
   </header>
   <main>{@render children()}</main>

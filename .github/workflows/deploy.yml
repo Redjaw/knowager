@@ -18,8 +18,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+      PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
       BASE_PATH: /${{ github.event.repository.name }}
     steps:
       - name: Checkout
@@ -32,10 +32,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install --include=dev
-
-      - name: Ensure Tailwind/PostCSS runtime deps are present
-        run: npm install tailwindcss@^3.4.17 postcss@^8.5.1 autoprefixer@^10.4.20 --no-save
+        run: npm install
 
       - name: Build app
         run: npm run build
