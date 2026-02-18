@@ -18,6 +18,15 @@
   let message = '';
   let error = '';
   let loading = true;
+  let calendarCursor = startOfMonth(new Date());
+
+  const today = new Date();
+  let calendarYear = today.getFullYear();
+  let calendarMonth = today.getMonth();
+
+  const today = new Date();
+  let calendarYear = today.getFullYear();
+  let calendarMonth = today.getMonth();
 
   const initialDate = new Date();
   let calendarYear = initialDate.getFullYear();
