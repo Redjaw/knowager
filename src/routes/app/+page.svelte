@@ -92,7 +92,7 @@
     if (isPast(day)) return 'Data passata';
     const closure = closureFor(day);
     if (closure) {
-      return closure.note?.trim() ? `Chiuso: ${closure.note}` : 'Chiuso (festività/chiusura straordinaria)';
+      return closure.note?.trim() ? `${closure.note}` : 'Chiuso (festività/chiusura straordinaria)';
     }
     if (isWeekend(day.date)) return 'Weekend';
     return isMine(day.key) ? 'Disponibile' : 'Non impostato';
