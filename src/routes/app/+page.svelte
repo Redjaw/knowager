@@ -208,58 +208,81 @@
     </div>
   </header>
 
-  {#if refreshing}
-    <p class="mb-3 text-sm text-slate-500">Aggiornamento in background...</p>
-  {/if}
-
-  {#if loading}
-    <p class="text-slate-600">Caricamento...</p>
-  {:else if errorMessage}
-    <p class="font-semibold text-red-700">{errorMessage}</p>
-  {:else}
-    <section class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-7">
-      {#each week as day, index}
-        {@const mine = isMine(day.key)}
-        {@const members = dayMembers(day.key)}
-        {@const disabled = !cardCanToggle(day)}
-        <button
-          type="button"
-          class={`flex min-h-[280px] flex-col rounded-2xl border p-4 text-left transition ${
-            mine ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white'
-          } ${disabled ? 'cursor-not-allowed bg-slate-100 text-slate-500' : 'cursor-pointer hover:border-blue-500'}`}
-          onclick={() => toggle(day)}
-          disabled={disabled}
-          aria-label={`${dayLabels[index]} ${day.dayNumber}`}
-        >
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">{dayLabels[index]}</p>
-              <p class="text-4xl font-bold text-slate-900">{day.dayNumber}</p>
+  <div class="relative">
+    {#if loading}
+      <section class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-7" aria-label="Caricamento disponibilità">
+        {#each Array(7) as _, index}
+          <article class="min-h-[280px] animate-pulse rounded-2xl border border-slate-200 bg-white p-4">
+            <div class="flex items-start justify-between">
+              <div class="space-y-2">
+                <div class="h-4 w-10 rounded bg-slate-200"></div>
+                <div class="h-10 w-12 rounded bg-slate-200"></div>
+              </div>
+              <div class="h-5 w-5 rounded-full bg-slate-200"></div>
             </div>
-            <span class={`mt-1 h-5 w-5 rounded-full border-2 ${mine ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-white'}`}></span>
-          </div>
+            <div class="mt-4 h-4 w-28 rounded bg-slate-200"></div>
+            <div class="mt-10 h-4 w-full rounded bg-slate-100"></div>
+            <div class="mt-3 flex gap-1">
+              <div class="h-8 w-8 rounded-full bg-slate-200"></div>
+              <div class="h-8 w-8 rounded-full bg-slate-200"></div>
+              <div class="h-8 w-8 rounded-full bg-slate-200"></div>
+            </div>
+          </article>
+        {/each}
+      </section>
+    {:else if errorMessage}
+      <p class="font-semibold text-red-700">{errorMessage}</p>
+    {:else}
+      <section class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-7">
+        {#each week as day, index}
+          {@const mine = isMine(day.key)}
+          {@const members = dayMembers(day.key)}
+          {@const disabled = !cardCanToggle(day)}
+          <button
+            type="button"
+            class={`flex min-h-[280px] flex-col rounded-2xl border p-4 text-left transition ${
+              mine ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white'
+            } ${disabled ? 'cursor-not-allowed bg-slate-100 text-slate-500' : 'cursor-pointer hover:border-blue-500'}`}
+            onclick={() => toggle(day)}
+            disabled={disabled}
+            aria-label={`${dayLabels[index]} ${day.dayNumber}`}
+          >
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">{dayLabels[index]}</p>
+                <p class="text-4xl font-bold text-slate-900">{day.dayNumber}</p>
+              </div>
+              <span class={`mt-1 h-5 w-5 rounded-full border-2 ${mine ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-white'}`}></span>
+            </div>
 
-          <p class="mt-4 text-sm font-medium text-slate-700">{dayStatus(day)}</p>
+            <p class="mt-4 text-sm font-medium text-slate-700">{dayStatus(day)}</p>
 
-          <div class="mt-auto border-t border-slate-200 pt-3">
-            <div class="mt-2 flex items-center">
-              {#if members.length === 0 && !disabled}
-                <span class="grid h-8 w-8 place-items-center rounded-full border border-dashed border-slate-300 text-slate-400">+</span>
-              {:else if members.length === 0 && disabled}
-                <span class="grid h-8 w-8 place-items-center rounded-full border border-slate-300 text-slate-400">-</span>
-              {:else}
-                {#each members.slice(0, 4) as member}
-                  {@const profile = profiles.get(member.user_id)}
-                  <img class="-ml-2 h-8 w-8 rounded-full border-2 border-white first:ml-0" src={gravatarUrl(profile?.email, 64)} alt={profileName(profile)} title={profileName(profile)} />
-                {/each}
-                {#if members.length > 4}
-                  <span class="-ml-2 grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-blue-600 text-xs font-semibold text-white">+{members.length - 4}</span>
+            <div class="mt-auto border-t border-slate-200 pt-3">
+              <div class="mt-2 flex items-center">
+                {#if members.length === 0 && !disabled}
+                  <span class="grid h-8 w-8 place-items-center rounded-full border border-dashed border-slate-300 text-slate-400">+</span>
+                {:else if members.length === 0 && disabled}
+                  <span class="grid h-8 w-8 place-items-center rounded-full border border-slate-300 text-slate-400">-</span>
+                {:else}
+                  {#each members.slice(0, 4) as member}
+                    {@const profile = profiles.get(member.user_id)}
+                    <img class="-ml-2 h-8 w-8 rounded-full border-2 border-white first:ml-0" src={gravatarUrl(profile?.email, 64)} alt={profileName(profile)} title={profileName(profile)} />
+                  {/each}
+                  {#if members.length > 4}
+                    <span class="-ml-2 grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-blue-600 text-xs font-semibold text-white">+{members.length - 4}</span>
+                  {/if}
                 {/if}
-              {/if}
+              </div>
             </div>
-          </div>
-        </button>
-      {/each}
-    </section>
-  {/if}
+          </button>
+        {/each}
+      </section>
+    {/if}
+
+    {#if refreshing}
+      <div class="absolute inset-0 z-10 grid place-items-center rounded-2xl bg-white/70 backdrop-blur-[1px]" aria-live="polite" aria-label="Aggiornamento disponibilità in corso">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-slate-300 border-t-blue-600"></div>
+      </div>
+    {/if}
+  </div>
 </section>
