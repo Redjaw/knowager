@@ -22,7 +22,7 @@ Nessun backend custom.
 - @supabase/supabase-js
 - Supabase (Auth + Postgres)
 - GitHub Actions (deploy su GitHub Pages)
-- CSS minimale (no framework CSS)
+- Tailwind
 
 ---
 
@@ -92,7 +92,7 @@ Responsive:
 
 Permette di modificare:
 
-- avatar_id (scelta da set predefinito)
+- avatar_id (scelta da set predefinito), se non presente usa gravatar dalla mail
 - first_name
 - last_name
 - birth_date (facoltativa)
