@@ -18,6 +18,7 @@
   let message = '';
   let error = '';
   let loading = true;
+  let calendarCursor = startOfMonth(new Date());
 
   const today = new Date();
   let calendarYear = today.getFullYear();
