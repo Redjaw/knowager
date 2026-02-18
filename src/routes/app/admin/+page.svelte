@@ -5,11 +5,13 @@
   import { supabase } from '$lib/supabaseClient';
   import { enforceAllowlist, getCurrentUser } from '$lib/session';
 
-  type Closure = { day: string; note: string | null };
+  type ClosureColor = 'gray' | 'yellow' | 'red';
+  type Closure = { day: string; note: string | null; color: ClosureColor | null };
 
   let closures: Closure[] = [];
   let newDay = '';
   let newNote = '';
+  let newColor: ClosureColor = 'gray';
   let warning = '';
   let message = '';
   let error = '';
@@ -27,7 +29,7 @@
   async function loadAll() {
     loading = true;
     const [closuresRes, warningRes] = await Promise.all([
-      supabase.from('closures').select('day,note').order('day', { ascending: true }),
+      supabase.from('closures').select('day,note,color').order('day', { ascending: true }),
       supabase.from('app_config').select('value').eq('key', 'homepage_warning').maybeSingle()
     ]);
 
@@ -47,7 +49,7 @@
     error = '';
     if (!newDay) return;
 
-    const { error: insertError } = await supabase.from('closures').upsert({ day: newDay, note: newNote || null });
+    const { error: insertError } = await supabase.from('closures').upsert({ day: newDay, note: newNote || null, color: newColor });
     if (insertError) {
       error = insertError.message;
       return;
@@ -56,6 +58,7 @@
     message = 'Chiusura salvata.';
     newDay = '';
     newNote = '';
+    newColor = 'gray';
     await loadAll();
   }
 
@@ -66,6 +69,19 @@
       return;
     }
     await loadAll();
+  }
+
+
+  function colorLabel(color: ClosureColor | null) {
+    if (color === 'yellow') return 'Giallo';
+    if (color === 'red') return 'Rosso';
+    return 'Grigio';
+  }
+
+  function colorBadgeClass(color: ClosureColor | null) {
+    if (color === 'yellow') return 'bg-amber-100 text-amber-800 border-amber-200';
+    if (color === 'red') return 'bg-red-100 text-red-800 border-red-200';
+    return 'bg-slate-100 text-slate-700 border-slate-200';
   }
 
   async function saveWarning() {
@@ -138,9 +154,14 @@
         <h2 class="text-2xl font-semibold text-slate-900">Chiusure calendario</h2>
         <p class="mb-4 text-slate-600">Aggiungi i giorni non selezionabili, includendo il motivo da mostrare agli utenti.</p>
 
-        <form class="mb-4 grid gap-3 md:grid-cols-[180px_1fr_auto]" on:submit|preventDefault={addClosure}>
+        <form class="mb-4 grid gap-3 md:grid-cols-[180px_1fr_150px_auto]" on:submit|preventDefault={addClosure}>
           <input class="rounded-xl border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2" type="date" bind:value={newDay} required />
           <input class="rounded-xl border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2" placeholder="Motivo (es. Ferragosto)" bind:value={newNote} />
+          <select class="rounded-xl border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2" bind:value={newColor}>
+            <option value="gray">Grigio</option>
+            <option value="yellow">Giallo</option>
+            <option value="red">Rosso</option>
+          </select>
           <button class="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-700" type="submit">Aggiungi</button>
         </form>
 
@@ -153,6 +174,7 @@
                 <div>
                   <p class="font-medium text-slate-900">{closure.day}</p>
                   <p class="text-sm text-slate-600">{closure.note?.trim() ? closure.note : 'Nessun motivo specificato'}</p>
+                  <span class={`mt-1 inline-flex w-fit rounded-full border px-2 py-0.5 text-xs font-semibold ${colorBadgeClass(closure.color)}`}>Colore: {colorLabel(closure.color)}</span>
                 </div>
                 <button class="w-fit rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50" on:click={() => removeClosure(closure.day)}>Rimuovi</button>
               </li>

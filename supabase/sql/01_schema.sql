@@ -17,6 +17,7 @@ create table if not exists public.profiles (
 create table if not exists public.closures (
   day date primary key,
   note text,
+  color text not null default 'gray' check (color in ('gray', 'yellow', 'red')),
   created_at timestamptz not null default now(),
   created_by uuid references auth.users(id)
 );

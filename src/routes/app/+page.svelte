@@ -6,7 +6,8 @@
   import { getCurrentUser } from '$lib/session';
 
   type Selection = { day: string; user_id: string };
-  type Closure = { day: string; note: string | null };
+  type ClosureColor = 'gray' | 'yellow' | 'red';
+  type Closure = { day: string; note: string | null; color: ClosureColor | null };
   type PublicProfile = { id: string; first_name: string | null; last_name: string | null; email: string | null };
 
   const dayLabels = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
@@ -48,7 +49,7 @@
       const days = week.map((d) => d.key);
       const [selectionsRes, closuresRes, warningRes] = await Promise.all([
         supabase.from('day_selections').select('day,user_id').in('day', days),
-        supabase.from('closures').select('day,note').in('day', days),
+        supabase.from('closures').select('day,note,color').in('day', days),
         supabase.from('app_config').select('value').eq('key', 'homepage_warning').maybeSingle()
       ]);
 
@@ -102,6 +103,50 @@
 
   function closureFor(day: WeekDay) {
     return closures.find((closure) => closure.day === day.key);
+  }
+
+  function closureTone(closure?: Closure) {
+    if (!closure || closure.color === 'gray' || !closure.color) {
+      return 'border-slate-300 bg-slate-200/50 text-slate-600';
+    }
+
+    if (closure.color === 'yellow') {
+      return 'border-amber-300 bg-amber-100/60 text-amber-800';
+    }
+
+    return 'border-red-300 bg-red-100/60 text-red-800';
+  }
+
+  function cardClasses(day: WeekDay, mine: boolean) {
+    const closure = closureFor(day);
+    if (closure) {
+      return `cursor-not-allowed ${closureTone(closure)}`;
+    }
+
+    if (isPast(day) || isWeekend(day.date)) {
+      return 'cursor-not-allowed border-slate-300 bg-slate-200/50 text-slate-500';
+    }
+
+    if (mine) {
+      return 'cursor-pointer border-blue-500 bg-blue-50 hover:border-blue-600';
+    }
+
+    return 'cursor-pointer border-slate-200 bg-white hover:border-blue-500';
+  }
+
+  function indicatorClasses(day: WeekDay, mine: boolean) {
+    const closure = closureFor(day);
+    if (closure) {
+      if (closure.color === 'yellow') return 'border-amber-500 bg-amber-300';
+      if (closure.color === 'red') return 'border-red-500 bg-red-300';
+      return 'border-slate-400 bg-slate-300';
+    }
+
+    if (isPast(day) || isWeekend(day.date)) {
+      return 'border-slate-400 bg-slate-300';
+    }
+
+    return mine ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-white';
   }
 
   function dayStatus(day: WeekDay) {
@@ -240,9 +285,7 @@
           {@const disabled = !cardCanToggle(day)}
           <button
             type="button"
-            class={`flex min-h-[280px] flex-col rounded-2xl border p-4 text-left transition ${
-              mine ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white'
-            } ${disabled ? 'cursor-not-allowed bg-slate-100 text-slate-500' : 'cursor-pointer hover:border-blue-500'}`}
+            class={`flex min-h-[280px] flex-col rounded-2xl border p-4 text-left transition ${cardClasses(day, mine)}`}
             onclick={() => toggle(day)}
             disabled={disabled}
             aria-label={`${dayLabels[index]} ${day.dayNumber}`}
@@ -252,7 +295,7 @@
                 <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">{dayLabels[index]}</p>
                 <p class="text-4xl font-bold text-slate-900">{day.dayNumber}</p>
               </div>
-              <span class={`mt-1 h-5 w-5 rounded-full border-2 ${mine ? 'border-blue-600 bg-blue-600' : 'border-slate-300 bg-white'}`}></span>
+              <span class={`mt-1 h-5 w-5 rounded-full border-2 ${indicatorClasses(day, mine)}`}></span>
             </div>
 
             <p class="mt-4 text-sm font-medium text-slate-700">{dayStatus(day)}</p>
