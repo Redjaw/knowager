@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { getCurrentWeek, type WeekDay, toDateKey } from '$lib/dateUtils';
   import { supabase } from '$lib/supabaseClient';
   import { gravatarUrl } from '$lib/gravatar';
@@ -22,9 +22,25 @@
   let loading = true;
   let refreshing = false;
   let errorMessage = '';
+  let pollInterval: ReturnType<typeof setInterval> | null = null;
+  let polling = false;
 
   onMount(async () => {
     await loadData();
+
+    pollInterval = setInterval(() => {
+      if (polling) return;
+      polling = true;
+      void loadData({ background: true }).finally(() => {
+        polling = false;
+      });
+    }, 60000);
+  });
+
+  onDestroy(() => {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+    }
   });
 
   async function loadData(options: { background?: boolean } = {}) {
