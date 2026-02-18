@@ -3,6 +3,7 @@
   import { getCurrentWeek, type WeekDay, toDateKey } from '$lib/dateUtils';
   import { supabase } from '$lib/supabaseClient';
   import { gravatarUrl } from '$lib/gravatar';
+  import { getCurrentUser } from '$lib/session';
 
   type Selection = { day: string; user_id: string };
   type Closure = { day: string; note: string | null };
@@ -18,53 +19,68 @@
   let warning = '';
   let currentUserId = '';
   let loading = true;
+  let refreshing = false;
   let errorMessage = '';
 
   onMount(async () => {
     await loadData();
   });
 
-  async function loadData() {
-    loading = true;
+  async function loadData(options: { background?: boolean } = {}) {
+    const background = options.background ?? false;
+    if (background) {
+      refreshing = true;
+    } else {
+      loading = true;
+    }
+
     errorMessage = '';
     week = getCurrentWeek(referenceDate);
 
-    const { data: userData } = await supabase.auth.getUser();
-    currentUserId = userData.user?.id ?? '';
-    const days = week.map((d) => d.key);
+    try {
+      const currentUser = await getCurrentUser();
+      currentUserId = currentUser?.id ?? '';
+      if (!currentUserId) {
+        errorMessage = 'Sessione scaduta. Ricarica la pagina per continuare.';
+        return;
+      }
 
-    const [selectionsRes, closuresRes, warningRes] = await Promise.all([
-      supabase.from('day_selections').select('day,user_id').in('day', days),
-      supabase.from('closures').select('day,note').in('day', days),
-      supabase.from('app_config').select('value').eq('key', 'homepage_warning').maybeSingle()
-    ]);
+      const days = week.map((d) => d.key);
+      const [selectionsRes, closuresRes, warningRes] = await Promise.all([
+        supabase.from('day_selections').select('day,user_id').in('day', days),
+        supabase.from('closures').select('day,note').in('day', days),
+        supabase.from('app_config').select('value').eq('key', 'homepage_warning').maybeSingle()
+      ]);
 
-    if (selectionsRes.error || closuresRes.error || warningRes.error) {
-      errorMessage = selectionsRes.error?.message || closuresRes.error?.message || warningRes.error?.message || 'Errore durante il caricamento';
-      loading = false;
-      return;
-    }
+      if (selectionsRes.error || closuresRes.error || warningRes.error) {
+        errorMessage = selectionsRes.error?.message || closuresRes.error?.message || warningRes.error?.message || 'Errore durante il caricamento';
+        return;
+      }
 
-    selections = (selectionsRes.data as Selection[]) ?? [];
-    closures = (closuresRes.data as Closure[]) ?? [];
-    warning = warningRes.data?.value ?? '';
+      selections = (selectionsRes.data as Selection[]) ?? [];
+      closures = (closuresRes.data as Closure[]) ?? [];
+      warning = warningRes.data?.value ?? '';
 
-    const ids = [...new Set(selections.map((item) => item.user_id))];
-    if (!ids.length) {
-      profiles = new Map();
-      loading = false;
-      return;
-    }
+      const ids = [...new Set(selections.map((item) => item.user_id))];
+      if (!ids.length) {
+        profiles = new Map();
+        return;
+      }
 
-    const profileRes = await supabase.from('profiles').select('id,first_name,last_name,email').in('id', ids);
+      const profileRes = await supabase.from('profiles').select('id,first_name,last_name,email').in('id', ids);
+      if (profileRes.error) {
+        errorMessage = profileRes.error.message;
+        return;
+      }
 
-    if (profileRes.error) {
-      errorMessage = profileRes.error.message;
-    } else {
       profiles = new Map((profileRes.data ?? []).map((profile) => [profile.id, profile as PublicProfile]));
+    } finally {
+      if (background) {
+        refreshing = false;
+      } else {
+        loading = false;
+      }
     }
-
-    loading = false;
   }
 
   function dayMembers(day: string) {
@@ -108,32 +124,39 @@
 
   async function toggle(day: WeekDay) {
     if (!cardCanToggle(day)) return;
-
-    const mine = isMine(day.key);
-    const query = supabase.from('day_selections');
-
-    if (mine) {
-      const { error } = await query.delete().eq('day', day.key).eq('user_id', currentUserId);
-      if (error) {
-        errorMessage = error.message;
-        return;
-      }
-    } else {
-      const { error } = await query.insert({ day: day.key, user_id: currentUserId });
-      if (error) {
-        errorMessage = error.message;
-        return;
-      }
+    if (!currentUserId) {
+      errorMessage = 'Sessione scaduta. Ricarica la pagina per continuare.';
+      return;
     }
 
-    await loadData();
+    const mine = isMine(day.key);
+    const previousSelections = selections;
+
+    if (mine) {
+      selections = selections.filter((item) => !(item.day === day.key && item.user_id === currentUserId));
+    } else {
+      selections = [...selections, { day: day.key, user_id: currentUserId }];
+    }
+
+    const query = supabase.from('day_selections');
+    const result = mine
+      ? await query.delete().eq('day', day.key).eq('user_id', currentUserId)
+      : await query.insert({ day: day.key, user_id: currentUserId });
+
+    if (result.error) {
+      selections = previousSelections;
+      errorMessage = result.error.message;
+      return;
+    }
+
+    void loadData({ background: true });
   }
 
   function moveWeek(delta: number) {
     const next = new Date(referenceDate);
     next.setDate(next.getDate() + delta * 7);
     referenceDate = next;
-    void loadData();
+    void loadData({ background: false });
   }
 
   function weekRangeLabel() {
@@ -184,6 +207,10 @@
       <button class="h-9 w-9 rounded-full text-2xl text-blue-700 transition hover:bg-blue-50" type="button" onclick={() => moveWeek(1)} aria-label="Settimana successiva">›</button>
     </div>
   </header>
+
+  {#if refreshing}
+    <p class="mb-3 text-sm text-slate-500">Aggiornamento in background...</p>
+  {/if}
 
   {#if loading}
     <p class="text-slate-600">Caricamento...</p>
