@@ -15,7 +15,6 @@
     <a class="inline-flex items-center no-underline" href={`${base}/app`} aria-label="Vai alla home">
       <picture>
         <source srcset={`${base}/knowager-logo.png`} type="image/png" />
-        <img src={`${base}/knowager-logo.svg`} alt="Knowager" class="h-12 w-auto" />
       </picture>
     </a>
 
