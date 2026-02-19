@@ -3,11 +3,9 @@
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
   import { supabase } from '$lib/supabaseClient';
-  import { enforceAllowlist } from '$lib/session';
 
   const OAUTH_ERROR = 'Impossibile completare l’accesso con Google. Riprova più tardi.';
 
-  let email = '';
   let loading = false;
   let errorMessage = '';
 
@@ -15,12 +13,7 @@
     const { data } = await supabase.auth.getSession();
     if (!data.session) return;
 
-    const allow = await enforceAllowlist();
-    if (allow.allowed) {
-      await goto(`${base}/app`);
-    } else {
-      errorMessage = 'Accesso non autorizzato';
-    }
+    await goto(`${base}/app`);
   });
 
   async function loginWithGoogle() {

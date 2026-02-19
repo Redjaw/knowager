@@ -54,6 +54,15 @@ on conflict (email) do update
 set is_admin = excluded.is_admin;
 ```
 
+
+### Dove gestire la whitelist in Supabase
+
+- Vai in **Table Editor** → schema `public` → tabella `allowed_emails`.
+- Aggiungi/modifica le righe con:
+  - `email` (chiave primaria)
+  - `is_admin` (`true`/`false`)
+- In alternativa usa SQL Editor con `insert ... on conflict` come nell'esempio sopra.
+
 ## Note RLS
 
 - L'app usa solo `PUBLIC_SUPABASE_URL` e `PUBLIC_SUPABASE_ANON_KEY` lato client.
