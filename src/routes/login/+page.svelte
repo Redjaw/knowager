@@ -5,6 +5,9 @@
   import { supabase } from '$lib/supabaseClient';
   import { enforceAllowlist } from '$lib/session';
 
+  const WHITELIST_CHECK_ERROR =
+    'Impossibile verificare la whitelist in questo momento. Procedo con il login standard.';
+
   let email = '';
   let loading = false;
   let statusMessage = '';
@@ -32,7 +35,11 @@
       request_email: normalizedEmail
     });
 
-    if (whitelistError || !canRequest) {
+    if (whitelistError) {
+      console.warn(WHITELIST_CHECK_ERROR, whitelistError);
+    }
+
+    if (!whitelistError && !canRequest) {
       loading = false;
       errorMessage = 'Non sei abilitato ad accedere.';
       return;
