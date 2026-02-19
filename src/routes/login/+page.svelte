@@ -6,8 +6,6 @@
 
   const OAUTH_ERROR = 'Impossibile completare l’accesso con Google. Riprova più tardi.';
 
-  // Kept to avoid runtime issues on stale bundles referencing `email`.
-  let email = '';
   let loading = false;
   let errorMessage = '';
 
@@ -27,24 +25,6 @@
   async function loginWithGoogle() {
     loading = true;
     errorMessage = '';
-
-    const normalizedEmail = email.trim().toLowerCase();
-    const { data: canRequest, error: whitelistError } = await supabase.rpc('can_request_magic_link', {
-      email: normalizedEmail
-    });
-
-    if (whitelistError) {
-      console.error(WHITELIST_CHECK_ERROR, whitelistError);
-      loading = false;
-      errorMessage = WHITELIST_CHECK_ERROR;
-      return;
-    }
-
-    if (!canRequest) {
-      loading = false;
-      errorMessage = 'Non sei abilitato ad accedere.';
-      return;
-    }
 
     const redirectTo = `${window.location.origin}${base}/app`;
     const { error } = await supabase.auth.signInWithOAuth({
