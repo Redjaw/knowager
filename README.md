@@ -34,15 +34,16 @@ npm run dev
 ## Setup Supabase
 
 1. Crea un progetto Supabase.
-2. In **Authentication > URL Configuration** imposta:
+2. In **Authentication > Providers** abilita **Google** e configura Client ID/Secret.
+3. In **Authentication > URL Configuration** imposta:
    - Site URL: URL GitHub Pages (es. `https://<user>.github.io/<repo>`)
    - Redirect URLs:
      - `http://localhost:5173/app`
      - `https://<user>.github.io/<repo>/app`
-3. Esegui SQL nell'ordine:
+4. Esegui SQL nell'ordine:
    - `supabase/sql/01_schema.sql`
    - `supabase/sql/02_rls.sql`
-4. Inserisci whitelist iniziale (SQL editor):
+5. Inserisci whitelist iniziale (SQL editor):
 
 ```sql
 insert into public.allowed_emails (email, is_admin)
@@ -83,7 +84,7 @@ Se devi pubblicare su dominio custom/root path, cambia `BASE_PATH` nel workflow 
 
 ## Struttura principale
 
-- `src/routes/login`: login magic link
+- `src/routes/login`: login Google OAuth
 - `src/routes/app`: area protetta
 - `src/routes/app/profile`: profilo utente
 - `src/routes/app/admin`: gestione closures + warning homepage
