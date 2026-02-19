@@ -5,9 +5,9 @@
   import { supabase } from '$lib/supabaseClient';
   import { enforceAllowlist } from '$lib/session';
 
-  let email = '';
+  const OAUTH_ERROR = 'Impossibile completare l’accesso con Google. Riprova più tardi.';
+
   let loading = false;
-  let statusMessage = '';
   let errorMessage = '';
 
   onMount(async () => {
@@ -22,26 +22,23 @@
     }
   });
 
-  async function sendLink() {
+  async function loginWithGoogle() {
     loading = true;
-    statusMessage = '';
     errorMessage = '';
 
     const redirectTo = `${window.location.origin}${base}/app`;
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
       options: {
-        emailRedirectTo: redirectTo
+        redirectTo
       }
     });
 
     loading = false;
     if (error) {
-      errorMessage = error.message;
-      return;
+      errorMessage = OAUTH_ERROR;
+      console.error(OAUTH_ERROR, error);
     }
-
-    statusMessage = 'Controlla la tua email per il magic link.';
   }
 </script>
 
@@ -51,27 +48,20 @@
 
 <main class="grid min-h-screen place-items-center p-4">
   <section class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-    <h1 class="text-3xl font-bold text-slate-900">Knowager</h1>
-    <p class="mt-1 text-slate-600">Accedi con magic link</p>
+    <h1 class="text-3xl font-bold text-slate-900">
+      <img src={`${base}/knowager-logo.png`} alt="Knowager" class="h-10 w-auto" />
+    </h1>
+    <p class="mt-1 text-slate-600">Accedi con Google</p>
 
-    <form class="mt-5 grid gap-3" on:submit|preventDefault={sendLink}>
-      <label class="text-sm font-medium text-slate-700" for="email">Email</label>
-      <input
-        class="rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2"
-        id="email"
-        type="email"
-        bind:value={email}
-        placeholder="nome@email.com"
-        required
-      />
-      <button class="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={loading || !email}>
-        {loading ? 'Invio in corso...' : 'Invia link'}
-      </button>
-    </form>
+    <button
+      class="mt-5 w-full rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+      onclick={loginWithGoogle}
+      disabled={loading}
+      type="button"
+    >
+      {loading ? 'Reindirizzamento in corso...' : 'Continua con Google'}
+    </button>
 
-    {#if statusMessage}
-      <p class="mt-4 text-sm font-medium text-green-700">{statusMessage}</p>
-    {/if}
     {#if errorMessage}
       <p class="mt-4 text-sm font-medium text-red-700">{errorMessage}</p>
     {/if}
