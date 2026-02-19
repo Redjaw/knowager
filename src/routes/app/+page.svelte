@@ -35,7 +35,7 @@
       void loadData({ background: true }).finally(() => {
         polling = false;
       });
-    }, 60000);
+    }, 180000);
   });
 
   onDestroy(() => {
