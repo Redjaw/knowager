@@ -328,7 +328,7 @@
           {@const disabled = !cardCanToggle(day)}
           <button
             type="button"
-            class={`flex min-h-[280px] flex-col rounded-2xl border p-4 text-left transition ${cardClasses(day, mine)}`}
+            class={`flex min-h-[190px] flex-col rounded-2xl border p-4 text-left transition sm:min-h-[220px] lg:min-h-[280px] ${cardClasses(day, mine)}`}
             onclick={() => toggle(day)}
             disabled={disabled}
             aria-label={`${dayLabels[index]} ${day.dayNumber}`}
