@@ -63,7 +63,11 @@
 <main class="grid min-h-screen place-items-center p-4">
   <section class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
     <h1 class="text-3xl font-bold text-slate-900">
+<<<<<<< codex/fix-missing-knowage-logo.png-image-3kus75
       <img src={`${base}/knowager-logo.png`} alt="Knowager" class="h-10 w-auto" />
+=======
+      <img src={`${base}/knowager-logo.png`} alt="Knowager" class="h-26 w-auto" />
+>>>>>>> main
     </h1>
     <p class="mt-1 text-slate-600">Accedi con magic link</p>
 
