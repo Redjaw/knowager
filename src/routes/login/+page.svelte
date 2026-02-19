@@ -32,7 +32,7 @@
 
     const normalizedEmail = email.trim().toLowerCase();
     const { data: canRequest, error: whitelistError } = await supabase.rpc('can_request_magic_link', {
-      request_email: normalizedEmail
+      email: normalizedEmail
     });
 
     if (whitelistError) {

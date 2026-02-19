@@ -1,4 +1,4 @@
-create or replace function public.can_request_magic_link(request_email text)
+create or replace function public.can_request_magic_link(email text)
 returns boolean
 language sql
 stable
@@ -8,7 +8,7 @@ as $$
   select exists (
     select 1
     from public.allowed_emails ae
-    where lower(ae.email) = lower(request_email)
+    where lower(ae.email) = lower(email)
   );
 $$;
 
