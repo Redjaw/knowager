@@ -51,7 +51,9 @@
 
 <main class="grid min-h-screen place-items-center p-4">
   <section class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-    <h1 class="text-3xl font-bold text-slate-900">Knowager</h1>
+    <h1 class="text-3xl font-bold text-slate-900">
+      <img src={`${base}/knowager-logo.png`} alt="Knowager" class="h-10 w-auto" />
+    </h1>
     <p class="mt-1 text-slate-600">Accedi con magic link</p>
 
     <form class="mt-5 grid gap-3" on:submit|preventDefault={sendLink}>
