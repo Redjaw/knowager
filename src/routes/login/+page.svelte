@@ -51,7 +51,7 @@
     <h1 class="text-3xl font-bold text-slate-900">
       <img src={`${base}/knowager-logo.png`} alt="Knowager" class="h-26 w-auto" />
     </h1>
-    <p class="mt-1 text-slate-600">Accedi con Google</p>
+    <p class="mt-1 text-slate-600"></p>
 
     <button
       class="mt-5 w-full rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
