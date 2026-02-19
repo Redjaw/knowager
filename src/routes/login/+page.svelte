@@ -6,7 +6,7 @@
   import { enforceAllowlist } from '$lib/session';
 
   const WHITELIST_CHECK_ERROR =
-    'Impossibile verificare la whitelist in questo momento. Procedo con il login standard.';
+    'Impossibile verificare i permessi di accesso. Riprova più tardi.';
 
   let email = '';
   let loading = false;
@@ -36,10 +36,13 @@
     });
 
     if (whitelistError) {
-      console.warn(WHITELIST_CHECK_ERROR, whitelistError);
+      console.error(WHITELIST_CHECK_ERROR, whitelistError);
+      loading = false;
+      errorMessage = WHITELIST_CHECK_ERROR;
+      return;
     }
 
-    if (!whitelistError && !canRequest) {
+    if (!canRequest) {
       loading = false;
       errorMessage = 'Non sei abilitato ad accedere.';
       return;
