@@ -14,6 +14,7 @@
 
   let referenceDate = new Date();
   let week: WeekDay[] = getCurrentWeek(referenceDate);
+  let currentWeekStartKey = getCurrentWeek(new Date())[0]?.key ?? '';
   let selections: Selection[] = [];
   let closures: Closure[] = [];
   let profiles = new Map<string, PublicProfile>();
@@ -52,6 +53,7 @@
     }
 
     errorMessage = '';
+    currentWeekStartKey = getCurrentWeek(new Date())[0]?.key ?? '';
     week = getCurrentWeek(referenceDate);
 
     try {
@@ -78,13 +80,7 @@
       closures = (closuresRes.data as Closure[]) ?? [];
       warning = warningRes.data?.value ?? '';
 
-      const ids = [...new Set(selections.map((item) => item.user_id))];
-      if (!ids.length) {
-        profiles = new Map();
-        return;
-      }
-
-      const profileRes = await supabase.from('profiles').select('id,first_name,last_name,email,birth_date').in('id', ids);
+      const profileRes = await supabase.from('profiles').select('id,first_name,last_name,email,birth_date');
       if (profileRes.error) {
         errorMessage = profileRes.error.message;
         return;
@@ -183,9 +179,8 @@
     const month = `${day.date.getMonth() + 1}`.padStart(2, '0');
     const date = `${day.date.getDate()}`.padStart(2, '0');
 
-    return dayMembers(day.key)
-      .map((member) => profiles.get(member.user_id))
-      .filter((profile): profile is PublicProfile => Boolean(profile?.birth_date))
+    return [...profiles.values()]
+      .filter((profile): profile is PublicProfile => Boolean(profile.birth_date))
       .filter((profile) => profile.birth_date?.slice(5, 10) === `${month}-${date}`)
       .map((profile) => profileName(profile));
   }
@@ -222,6 +217,17 @@
     }
 
     void loadData({ background: true });
+  }
+
+
+  function isCurrentWeekVisible() {
+    return week[0]?.key === currentWeekStartKey;
+  }
+
+  function goToCurrentWeek() {
+    if (isCurrentWeekVisible()) return;
+    referenceDate = new Date();
+    void loadData({ background: false });
   }
 
   function moveWeek(delta: number) {
@@ -270,13 +276,23 @@
       {/if}
     </div>
 
-    <div class="flex min-w-[260px] items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2" aria-label="Selettore settimana">
-      <button class="h-9 w-9 rounded-full text-2xl text-blue-700 transition hover:bg-blue-50" type="button" onclick={() => moveWeek(-1)} aria-label="Settimana precedente">‹</button>
-      <div class="text-center">
-        <strong class="block text-lg font-semibold text-slate-900">{weekRangeLabel()}</strong>
-        <span class="text-sm text-slate-500">{weekMetaLabel()}</span>
+    <div class="flex items-center gap-2">
+      <div class="flex min-w-[260px] items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2" aria-label="Selettore settimana">
+        <button class="h-9 w-9 rounded-full text-2xl text-blue-700 transition hover:bg-blue-50" type="button" onclick={() => moveWeek(-1)} aria-label="Settimana precedente">‹</button>
+        <div class="text-center">
+          <strong class="block text-lg font-semibold text-slate-900">{weekRangeLabel()}</strong>
+          <span class="text-sm text-slate-500">{weekMetaLabel()}</span>
+        </div>
+        <button class="h-9 w-9 rounded-full text-2xl text-blue-700 transition hover:bg-blue-50" type="button" onclick={() => moveWeek(1)} aria-label="Settimana successiva">›</button>
       </div>
-      <button class="h-9 w-9 rounded-full text-2xl text-blue-700 transition hover:bg-blue-50" type="button" onclick={() => moveWeek(1)} aria-label="Settimana successiva">›</button>
+      <button
+        class={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${isCurrentWeekVisible() ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400' : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'}`}
+        type="button"
+        onclick={goToCurrentWeek}
+        disabled={isCurrentWeekVisible()}
+      >
+        Oggi
+      </button>
     </div>
   </header>
 
