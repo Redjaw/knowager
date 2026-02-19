@@ -263,14 +263,14 @@
 </script>
 
 <svelte:head>
-  <title>Knowager - Disponibilità</title>
+  <title>Knowager - Presenze in sede</title>
 </svelte:head>
 
 <section class="px-4 py-6 sm:px-8">
   <header class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
     <div>
-      <h1 class="text-3xl font-bold text-slate-900 sm:text-4xl">Disponibilità settimanale</h1>
-      <p class="mt-2 text-slate-600">Pianifica la tua settimana e controlla la disponibilità del team.</p>
+      <h1 class="text-3xl font-bold text-slate-900 sm:text-4xl">Presenze settimanale</h1>
+      <p class="mt-2 text-slate-600">Pianifica la tua settimana e controlla la presenza del team.</p>
       {#if warning}
         <p class="mt-3 inline-block rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-800">⚠️ {warning}</p>
       {/if}
