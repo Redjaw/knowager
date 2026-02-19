@@ -23,26 +23,36 @@
   let loading = true;
   let refreshing = false;
   let errorMessage = '';
-  let pollInterval: ReturnType<typeof setInterval> | null = null;
   let polling = false;
+  let realtimeSubscribed = false;
+  let selectionsChannel: ReturnType<typeof supabase.channel> | null = null;
 
   onMount(async () => {
     await loadData();
-
-    pollInterval = setInterval(() => {
-      if (polling) return;
-      polling = true;
-      void loadData({ background: true }).finally(() => {
-        polling = false;
-      });
-    }, 180000);
+    subscribeToSelectionsRealtime();
   });
 
   onDestroy(() => {
-    if (pollInterval) {
-      clearInterval(pollInterval);
+    if (selectionsChannel) {
+      void supabase.removeChannel(selectionsChannel);
     }
   });
+
+  function subscribeToSelectionsRealtime() {
+    if (realtimeSubscribed) return;
+
+    realtimeSubscribed = true;
+    selectionsChannel = supabase
+      .channel('day-selections-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'day_selections' }, () => {
+        if (polling) return;
+        polling = true;
+        void loadData({ background: true }).finally(() => {
+          polling = false;
+        });
+      })
+      .subscribe();
+  }
 
   async function loadData(options: { background?: boolean } = {}) {
     const background = options.background ?? false;
