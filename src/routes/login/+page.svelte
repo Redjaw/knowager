@@ -6,6 +6,8 @@
 
   const OAUTH_ERROR = 'Impossibile completare l’accesso con Google. Riprova più tardi.';
 
+  // Kept to avoid runtime issues on stale bundles referencing `email`.
+  let email = '';
   let loading = false;
   let errorMessage = '';
 
@@ -13,7 +15,13 @@
     const { data } = await supabase.auth.getSession();
     if (!data.session) return;
 
-    await goto(`${base}/app`);
+    const allow = await enforceAllowlist();
+    if (allow.allowed) {
+      await goto(`${base}/app`);
+      return;
+    }
+
+    errorMessage = 'Accesso non autorizzato';
   });
 
   async function loginWithGoogle() {
