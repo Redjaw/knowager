@@ -18,13 +18,15 @@
   let message = '';
   let error = '';
   let loading = true;
-  let calendarCursor = startOfMonth(new Date());
-
-  const today = new Date();
   const initialDate = new Date();
-  
-  let calendarYear = initialDate.getFullYear();
-  let calendarMonth = initialDate.getMonth();
+  let calendarCursor = new Date(initialDate.getFullYear(), initialDate.getMonth(), 1);
+  let visibleMonthLabel = '';
+  let visibleMonthPrefix = '';
+  let visibleCalendarCells: ReturnType<typeof buildCalendarCells> = [];
+
+  $: visibleMonthLabel = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' }).format(calendarCursor);
+  $: visibleMonthPrefix = `${calendarCursor.getFullYear()}-${`${calendarCursor.getMonth() + 1}`.padStart(2, '0')}`;
+  $: visibleCalendarCells = buildCalendarCells(calendarCursor);
 
   onMount(async () => {
     const allow = await enforceAllowlist();
@@ -99,29 +101,12 @@
     return `${year}-${month}-${day}`;
   }
 
-  function monthLabel() {
-    return new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' }).format(new Date(calendarYear, calendarMonth, 1));
-  }
-
-  function monthPrefix() {
-    const month = `${calendarMonth + 1}`.padStart(2, '0');
-    return `${calendarYear}-${month}`;
-  }
-
   function previousMonth() {
-    calendarMonth -= 1;
-    if (calendarMonth < 0) {
-      calendarMonth = 11;
-      calendarYear -= 1;
-    }
+    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() - 1, 1);
   }
 
   function nextMonth() {
-    calendarMonth += 1;
-    if (calendarMonth > 11) {
-      calendarMonth = 0;
-      calendarYear += 1;
-    }
+    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 1);
   }
 
   function closureByDay(day: string) {
@@ -129,8 +114,7 @@
   }
 
   function selectedMonthClosures() {
-    const prefix = monthPrefix();
-    return closures.filter((closure) => closure.day.startsWith(prefix));
+    return closures.filter((closure) => closure.day.startsWith(visibleMonthPrefix));
   }
 
   function selectCalendarDay(day: string) {
@@ -142,8 +126,10 @@
     }
   }
 
-  function calendarCells() {
-    const firstDay = new Date(calendarYear, calendarMonth, 1);
+  function buildCalendarCells(cursor: Date) {
+    const currentYear = cursor.getFullYear();
+    const currentMonth = cursor.getMonth();
+    const firstDay = new Date(currentYear, currentMonth, 1);
     const mondayBasedStart = (firstDay.getDay() + 6) % 7;
     const gridStart = new Date(firstDay);
     gridStart.setDate(firstDay.getDate() - mondayBasedStart);
@@ -155,7 +141,7 @@
       return {
         day,
         dateNumber: date.getDate(),
-        inMonth: date.getMonth() === calendarMonth,
+        inMonth: date.getMonth() === currentMonth,
         isToday: day === toDateKey(new Date()),
         closure: closureByDay(day)
       };
@@ -270,7 +256,7 @@
           <div class="rounded-xl border border-slate-200 bg-white p-4">
             <div class="mb-3 flex items-center justify-between">
               <button class="h-8 w-8 rounded-full text-xl text-blue-700 transition hover:bg-blue-50" type="button" on:click={previousMonth} aria-label="Mese precedente">‹</button>
-              <h3 class="text-sm font-semibold capitalize text-slate-900">{monthLabel()}</h3>
+              <h3 class="text-sm font-semibold capitalize text-slate-900">{visibleMonthLabel}</h3>
               <button class="h-8 w-8 rounded-full text-xl text-blue-700 transition hover:bg-blue-50" type="button" on:click={nextMonth} aria-label="Mese successivo">›</button>
             </div>
 
@@ -281,7 +267,7 @@
             </div>
 
             <div class="grid grid-cols-7 gap-1">
-              {#each calendarCells() as cell}
+              {#each visibleCalendarCells as cell}
                 <button
                   type="button"
                   class={`relative h-10 rounded-lg border text-xs font-medium transition ${cell.inMonth ? 'border-slate-200 text-slate-700 hover:bg-slate-50' : 'border-transparent text-slate-300'} ${cell.isToday ? 'ring-2 ring-blue-300' : ''} ${newDay === cell.day ? 'border-blue-500 bg-blue-50 text-blue-700' : ''}`}
