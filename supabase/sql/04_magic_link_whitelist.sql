@@ -8,7 +8,7 @@ as $$
   select exists (
     select 1
     from public.allowed_emails ae
-    where lower(ae.email) = lower(email)
+    where lower(ae.email) = lower($1)
   );
 $$;
 
