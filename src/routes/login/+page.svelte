@@ -42,7 +42,7 @@
       return;
     }
 
-    if (!canRequest) {
+    if (!canRequest.exists) {
       loading = false;
       errorMessage = 'Non sei abilitato ad accedere.';
       return;
