@@ -12,9 +12,11 @@
 
 <div class="min-h-screen">
   <header class="flex min-h-[72px] flex-col gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-    <a class="inline-flex items-center gap-2 text-2xl font-bold text-slate-900 no-underline" href={`${base}/app`}>
-      <span aria-hidden="true">🗓️</span>
-      <span>Knowager</span>
+    <a class="inline-flex items-center no-underline" href={`${base}/app`} aria-label="Vai alla home">
+      <picture>
+        <source srcset={`${base}/knowager-logo.png`} type="image/png" />
+        <img src={`${base}/knowager-logo.svg`} alt="Knowager" class="h-12 w-auto" />
+      </picture>
     </a>
 
     <nav class="flex flex-wrap items-center gap-2">
