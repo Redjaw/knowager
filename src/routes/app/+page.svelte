@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
+  import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
   import { getCurrentWeek, type WeekDay, toDateKey } from '$lib/dateUtils';
   import { supabase } from '$lib/supabaseClient';
   import { gravatarUrl } from '$lib/gravatar';
@@ -23,26 +24,73 @@
   let loading = true;
   let refreshing = false;
   let errorMessage = '';
-  let pollInterval: ReturnType<typeof setInterval> | null = null;
-  let polling = false;
+  let realtimeSubscribed = false;
+  let selectionsChannel: ReturnType<typeof supabase.channel> | null = null;
+  let reconcileTimeout: ReturnType<typeof setTimeout> | null = null;
 
   onMount(async () => {
     await loadData();
-
-    pollInterval = setInterval(() => {
-      if (polling) return;
-      polling = true;
-      void loadData({ background: true }).finally(() => {
-        polling = false;
-      });
-    }, 180000);
+    subscribeToSelectionsRealtime();
   });
 
   onDestroy(() => {
-    if (pollInterval) {
-      clearInterval(pollInterval);
+    if (reconcileTimeout) {
+      clearTimeout(reconcileTimeout);
+    }
+
+    if (selectionsChannel) {
+      void supabase.removeChannel(selectionsChannel);
     }
   });
+
+  function subscribeToSelectionsRealtime() {
+    if (realtimeSubscribed) return;
+
+    realtimeSubscribed = true;
+    selectionsChannel = supabase
+      .channel('day-selections-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'day_selections' }, (payload) => {
+        applyRealtimeSelectionChange(payload);
+      })
+      .subscribe();
+  }
+
+  function applyRealtimeSelectionChange(payload: RealtimePostgresChangesPayload<Selection>) {
+    const daysInWeek = new Set(week.map((day) => day.key));
+    const next = (payload.new ?? {}) as Partial<Selection>;
+    const prev = (payload.old ?? {}) as Partial<Selection>;
+    const newDay = next.day;
+    const oldDay = prev.day;
+
+    if ((!newDay || !daysInWeek.has(newDay)) && (!oldDay || !daysInWeek.has(oldDay))) {
+      return;
+    }
+
+    if (payload.eventType === 'INSERT' && next.day && next.user_id) {
+      const exists = selections.some((item) => item.day === next.day && item.user_id === next.user_id);
+      if (!exists) {
+        selections = [...selections, { day: next.day, user_id: next.user_id }];
+      }
+    }
+
+    if (payload.eventType === 'DELETE' && prev.day && prev.user_id) {
+      selections = selections.filter((item) => !(item.day === prev.day && item.user_id === prev.user_id));
+    }
+
+    if (payload.eventType === 'UPDATE' && prev.day && prev.user_id && next.day && next.user_id) {
+      selections = selections
+        .filter((item) => !(item.day === prev.day && item.user_id === prev.user_id))
+        .concat({ day: next.day, user_id: next.user_id });
+    }
+
+    if (reconcileTimeout) {
+      clearTimeout(reconcileTimeout);
+    }
+
+    reconcileTimeout = setTimeout(() => {
+      void loadData({ background: true });
+    }, 400);
+  }
 
   async function loadData(options: { background?: boolean } = {}) {
     const background = options.background ?? false;
