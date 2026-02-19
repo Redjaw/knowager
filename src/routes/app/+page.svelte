@@ -23,26 +23,64 @@
   let loading = true;
   let refreshing = false;
   let errorMessage = '';
-  let pollInterval: ReturnType<typeof setInterval> | null = null;
-  let polling = false;
+  let realtimeSubscribed = false;
+  let selectionsChannel: ReturnType<typeof supabase.channel> | null = null;
 
   onMount(async () => {
     await loadData();
-
-    pollInterval = setInterval(() => {
-      if (polling) return;
-      polling = true;
-      void loadData({ background: true }).finally(() => {
-        polling = false;
-      });
-    }, 180000);
+    subscribeToSelectionsRealtime();
   });
 
   onDestroy(() => {
-    if (pollInterval) {
-      clearInterval(pollInterval);
+    if (selectionsChannel) {
+      void supabase.removeChannel(selectionsChannel);
     }
   });
+
+  function subscribeToSelectionsRealtime() {
+    if (realtimeSubscribed) return;
+
+    realtimeSubscribed = true;
+    selectionsChannel = supabase
+      .channel('day-selections-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'day_selections' }, (payload) => {
+        applyRealtimeSelectionChange(payload);
+      })
+      .subscribe();
+  }
+
+  function applyRealtimeSelectionChange(payload: {
+    eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+    new: Partial<Selection>;
+    old: Partial<Selection>;
+  }) {
+    const daysInWeek = new Set(week.map((day) => day.key));
+    const newDay = payload.new.day;
+    const oldDay = payload.old.day;
+
+    if (newDay && !daysInWeek.has(newDay) && oldDay && !daysInWeek.has(oldDay)) {
+      return;
+    }
+
+    if (payload.eventType === 'INSERT' && payload.new.day && payload.new.user_id) {
+      const exists = selections.some((item) => item.day === payload.new.day && item.user_id === payload.new.user_id);
+      if (!exists) {
+        selections = [...selections, { day: payload.new.day, user_id: payload.new.user_id }];
+      }
+      return;
+    }
+
+    if (payload.eventType === 'DELETE' && payload.old.day && payload.old.user_id) {
+      selections = selections.filter((item) => !(item.day === payload.old.day && item.user_id === payload.old.user_id));
+      return;
+    }
+
+    if (payload.eventType === 'UPDATE' && payload.old.day && payload.old.user_id && payload.new.day && payload.new.user_id) {
+      selections = selections
+        .filter((item) => !(item.day === payload.old.day && item.user_id === payload.old.user_id))
+        .concat({ day: payload.new.day, user_id: payload.new.user_id });
+    }
+  }
 
   async function loadData(options: { background?: boolean } = {}) {
     const background = options.background ?? false;
