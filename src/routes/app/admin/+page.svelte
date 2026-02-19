@@ -127,6 +127,7 @@
     }
   }
 
+<<<<<<< codex/fix-referenceerror-for-startofmonth-8pml4w
 
   function jumpToClosureMonth(day: string) {
     const [yearValue, monthValue] = day.split('-').map((value) => Number(value));
@@ -146,6 +147,8 @@
     });
   }
 
+=======
+>>>>>>> main
   function buildCalendarCells(cursor: Date) {
     const currentYear = cursor.getFullYear();
     const currentMonth = cursor.getMonth();
