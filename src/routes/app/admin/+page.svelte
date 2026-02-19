@@ -14,6 +14,7 @@
   let newDay = '';
   let newNote = '';
   let newColor: ClosureColor = 'gray';
+  let closureSearch = '';
   let warning = '';
   let message = '';
   let error = '';
@@ -126,6 +127,28 @@
     }
   }
 
+<<<<<<< codex/fix-referenceerror-for-startofmonth-8pml4w
+
+  function jumpToClosureMonth(day: string) {
+    const [yearValue, monthValue] = day.split('-').map((value) => Number(value));
+    if (!yearValue || !monthValue) return;
+    calendarCursor = new Date(yearValue, monthValue - 1, 1);
+    selectCalendarDay(day);
+  }
+
+  function filteredClosures() {
+    const normalizedQuery = closureSearch.trim().toLowerCase();
+    if (!normalizedQuery) return closures;
+
+    return closures.filter((closure) => {
+      const day = closure.day.toLowerCase();
+      const note = (closure.note ?? '').toLowerCase();
+      return day.includes(normalizedQuery) || note.includes(normalizedQuery);
+    });
+  }
+
+=======
+>>>>>>> main
   function buildCalendarCells(cursor: Date) {
     const currentYear = cursor.getFullYear();
     const currentMonth = cursor.getMonth();
@@ -246,11 +269,38 @@
                       <p class="text-sm text-slate-600">{closure.note?.trim() ? closure.note : 'Nessun motivo specificato'}</p>
                       <span class={`mt-1 inline-flex w-fit rounded-full border px-2 py-0.5 text-xs font-semibold ${colorBadgeClass(closure.color)}`}>Colore: {colorLabel(closure.color)}</span>
                     </button>
-                    <button class="w-fit rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50" on:click={() => removeClosure(closure.day)}>Rimuovi</button>
+                    <button type="button" class="w-fit rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50" on:click={() => removeClosure(closure.day)}>Rimuovi</button>
                   </li>
                 {/each}
               {/if}
             </ul>
+
+            <div class="mt-5 rounded-xl border border-slate-200 bg-white p-4">
+              <div class="mb-3 flex items-center justify-between gap-3">
+                <h4 class="text-sm font-semibold text-slate-900">Tutte le chiusure</h4>
+                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{filteredClosures().length}</span>
+              </div>
+              <input
+                class="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-500 transition focus:ring-2"
+                placeholder="Cerca per data o motivo (es. 2026-08, ferragosto)"
+                bind:value={closureSearch}
+              />
+              <ul class="max-h-56 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/60 px-3">
+                {#if filteredClosures().length === 0}
+                  <li class="py-3 text-sm text-slate-500">Nessuna chiusura trovata.</li>
+                {:else}
+                  {#each filteredClosures() as closure}
+                    <li class="flex items-center justify-between gap-3 py-2">
+                      <button type="button" class="text-left" on:click={() => jumpToClosureMonth(closure.day)}>
+                        <p class="text-sm font-medium text-slate-900">{closure.day}</p>
+                        <p class="text-xs text-slate-600">{closure.note?.trim() ? closure.note : 'Nessun motivo specificato'}</p>
+                      </button>
+                      <button type="button" class="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50" on:click={() => removeClosure(closure.day)}>Rimuovi</button>
+                    </li>
+                  {/each}
+                {/if}
+              </ul>
+            </div>
           </div>
 
           <div class="rounded-xl border border-slate-200 bg-white p-4">
