@@ -23,7 +23,6 @@
   let loading = true;
   let refreshing = false;
   let errorMessage = '';
-  let polling = false;
   let realtimeSubscribed = false;
   let selectionsChannel: ReturnType<typeof supabase.channel> | null = null;
 
@@ -44,14 +43,43 @@
     realtimeSubscribed = true;
     selectionsChannel = supabase
       .channel('day-selections-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'day_selections' }, () => {
-        if (polling) return;
-        polling = true;
-        void loadData({ background: true }).finally(() => {
-          polling = false;
-        });
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'day_selections' }, (payload) => {
+        applyRealtimeSelectionChange(payload);
       })
       .subscribe();
+  }
+
+  function applyRealtimeSelectionChange(payload: {
+    eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+    new: Partial<Selection>;
+    old: Partial<Selection>;
+  }) {
+    const daysInWeek = new Set(week.map((day) => day.key));
+    const newDay = payload.new.day;
+    const oldDay = payload.old.day;
+
+    if (newDay && !daysInWeek.has(newDay) && oldDay && !daysInWeek.has(oldDay)) {
+      return;
+    }
+
+    if (payload.eventType === 'INSERT' && payload.new.day && payload.new.user_id) {
+      const exists = selections.some((item) => item.day === payload.new.day && item.user_id === payload.new.user_id);
+      if (!exists) {
+        selections = [...selections, { day: payload.new.day, user_id: payload.new.user_id }];
+      }
+      return;
+    }
+
+    if (payload.eventType === 'DELETE' && payload.old.day && payload.old.user_id) {
+      selections = selections.filter((item) => !(item.day === payload.old.day && item.user_id === payload.old.user_id));
+      return;
+    }
+
+    if (payload.eventType === 'UPDATE' && payload.old.day && payload.old.user_id && payload.new.day && payload.new.user_id) {
+      selections = selections
+        .filter((item) => !(item.day === payload.old.day && item.user_id === payload.old.user_id))
+        .concat({ day: payload.new.day, user_id: payload.new.user_id });
+    }
   }
 
   async function loadData(options: { background?: boolean } = {}) {
