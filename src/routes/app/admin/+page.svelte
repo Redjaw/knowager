@@ -14,17 +14,20 @@
   let newDay = '';
   let newNote = '';
   let newColor: ClosureColor = 'gray';
+  let closureSearch = '';
   let warning = '';
   let message = '';
   let error = '';
   let loading = true;
-  let calendarCursor = startOfMonth(new Date());
-
-  const today = new Date();
   const initialDate = new Date();
-  
-  let calendarYear = initialDate.getFullYear();
-  let calendarMonth = initialDate.getMonth();
+  let calendarCursor = new Date(initialDate.getFullYear(), initialDate.getMonth(), 1);
+  let visibleMonthLabel = '';
+  let visibleMonthPrefix = '';
+  let visibleCalendarCells: ReturnType<typeof buildCalendarCells> = [];
+
+  $: visibleMonthLabel = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' }).format(calendarCursor);
+  $: visibleMonthPrefix = `${calendarCursor.getFullYear()}-${`${calendarCursor.getMonth() + 1}`.padStart(2, '0')}`;
+  $: visibleCalendarCells = buildCalendarCells(calendarCursor);
 
   onMount(async () => {
     const allow = await enforceAllowlist();
@@ -99,29 +102,12 @@
     return `${year}-${month}-${day}`;
   }
 
-  function monthLabel() {
-    return new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' }).format(new Date(calendarYear, calendarMonth, 1));
-  }
-
-  function monthPrefix() {
-    const month = `${calendarMonth + 1}`.padStart(2, '0');
-    return `${calendarYear}-${month}`;
-  }
-
   function previousMonth() {
-    calendarMonth -= 1;
-    if (calendarMonth < 0) {
-      calendarMonth = 11;
-      calendarYear -= 1;
-    }
+    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() - 1, 1);
   }
 
   function nextMonth() {
-    calendarMonth += 1;
-    if (calendarMonth > 11) {
-      calendarMonth = 0;
-      calendarYear += 1;
-    }
+    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 1);
   }
 
   function closureByDay(day: string) {
@@ -129,8 +115,7 @@
   }
 
   function selectedMonthClosures() {
-    const prefix = monthPrefix();
-    return closures.filter((closure) => closure.day.startsWith(prefix));
+    return closures.filter((closure) => closure.day.startsWith(visibleMonthPrefix));
   }
 
   function selectCalendarDay(day: string) {
@@ -142,8 +127,29 @@
     }
   }
 
-  function calendarCells() {
-    const firstDay = new Date(calendarYear, calendarMonth, 1);
+
+  function jumpToClosureMonth(day: string) {
+    const [yearValue, monthValue] = day.split('-').map((value) => Number(value));
+    if (!yearValue || !monthValue) return;
+    calendarCursor = new Date(yearValue, monthValue - 1, 1);
+    selectCalendarDay(day);
+  }
+
+  function filteredClosures() {
+    const normalizedQuery = closureSearch.trim().toLowerCase();
+    if (!normalizedQuery) return closures;
+
+    return closures.filter((closure) => {
+      const day = closure.day.toLowerCase();
+      const note = (closure.note ?? '').toLowerCase();
+      return day.includes(normalizedQuery) || note.includes(normalizedQuery);
+    });
+  }
+
+  function buildCalendarCells(cursor: Date) {
+    const currentYear = cursor.getFullYear();
+    const currentMonth = cursor.getMonth();
+    const firstDay = new Date(currentYear, currentMonth, 1);
     const mondayBasedStart = (firstDay.getDay() + 6) % 7;
     const gridStart = new Date(firstDay);
     gridStart.setDate(firstDay.getDate() - mondayBasedStart);
@@ -155,7 +161,7 @@
       return {
         day,
         dateNumber: date.getDate(),
-        inMonth: date.getMonth() === calendarMonth,
+        inMonth: date.getMonth() === currentMonth,
         isToday: day === toDateKey(new Date()),
         closure: closureByDay(day)
       };
@@ -260,17 +266,44 @@
                       <p class="text-sm text-slate-600">{closure.note?.trim() ? closure.note : 'Nessun motivo specificato'}</p>
                       <span class={`mt-1 inline-flex w-fit rounded-full border px-2 py-0.5 text-xs font-semibold ${colorBadgeClass(closure.color)}`}>Colore: {colorLabel(closure.color)}</span>
                     </button>
-                    <button class="w-fit rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50" on:click={() => removeClosure(closure.day)}>Rimuovi</button>
+                    <button type="button" class="w-fit rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50" on:click={() => removeClosure(closure.day)}>Rimuovi</button>
                   </li>
                 {/each}
               {/if}
             </ul>
+
+            <div class="mt-5 rounded-xl border border-slate-200 bg-white p-4">
+              <div class="mb-3 flex items-center justify-between gap-3">
+                <h4 class="text-sm font-semibold text-slate-900">Tutte le chiusure</h4>
+                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{filteredClosures().length}</span>
+              </div>
+              <input
+                class="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-500 transition focus:ring-2"
+                placeholder="Cerca per data o motivo (es. 2026-08, ferragosto)"
+                bind:value={closureSearch}
+              />
+              <ul class="max-h-56 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/60 px-3">
+                {#if filteredClosures().length === 0}
+                  <li class="py-3 text-sm text-slate-500">Nessuna chiusura trovata.</li>
+                {:else}
+                  {#each filteredClosures() as closure}
+                    <li class="flex items-center justify-between gap-3 py-2">
+                      <button type="button" class="text-left" on:click={() => jumpToClosureMonth(closure.day)}>
+                        <p class="text-sm font-medium text-slate-900">{closure.day}</p>
+                        <p class="text-xs text-slate-600">{closure.note?.trim() ? closure.note : 'Nessun motivo specificato'}</p>
+                      </button>
+                      <button type="button" class="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50" on:click={() => removeClosure(closure.day)}>Rimuovi</button>
+                    </li>
+                  {/each}
+                {/if}
+              </ul>
+            </div>
           </div>
 
           <div class="rounded-xl border border-slate-200 bg-white p-4">
             <div class="mb-3 flex items-center justify-between">
               <button class="h-8 w-8 rounded-full text-xl text-blue-700 transition hover:bg-blue-50" type="button" on:click={previousMonth} aria-label="Mese precedente">‹</button>
-              <h3 class="text-sm font-semibold capitalize text-slate-900">{monthLabel()}</h3>
+              <h3 class="text-sm font-semibold capitalize text-slate-900">{visibleMonthLabel}</h3>
               <button class="h-8 w-8 rounded-full text-xl text-blue-700 transition hover:bg-blue-50" type="button" on:click={nextMonth} aria-label="Mese successivo">›</button>
             </div>
 
@@ -281,7 +314,7 @@
             </div>
 
             <div class="grid grid-cols-7 gap-1">
-              {#each calendarCells() as cell}
+              {#each visibleCalendarCells as cell}
                 <button
                   type="button"
                   class={`relative h-10 rounded-lg border text-xs font-medium transition ${cell.inMonth ? 'border-slate-200 text-slate-700 hover:bg-slate-50' : 'border-transparent text-slate-300'} ${cell.isToday ? 'ring-2 ring-blue-300' : ''} ${newDay === cell.day ? 'border-blue-500 bg-blue-50 text-blue-700' : ''}`}
