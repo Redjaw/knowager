@@ -401,12 +401,12 @@
                 {:else if members.length === 0 && disabled}
                   <span class="grid h-8 w-8 place-items-center rounded-full border border-slate-300 text-slate-400">-</span>
                 {:else}
-                  {#each members.slice(0, 4) as member}
+                  {#each members.slice(0, 8) as member}
                     {@const profile = profiles.get(member.user_id)}
                     <img class="-ml-2 h-8 w-8 rounded-full border-2 border-white first:ml-0" src={gravatarUrl(profile?.email, 64)} alt={profileName(profile)} title={profileName(profile)} />
                   {/each}
-                  {#if members.length > 4}
-                    <span class="-ml-2 grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-blue-600 text-xs font-semibold text-white">+{members.length - 4}</span>
+                  {#if members.length > 8}
+                    <span class="-ml-2 grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-blue-600 text-xs font-semibold text-white">+{members.length - 8}</span>
                   {/if}
                 {/if}
               </div>
