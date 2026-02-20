@@ -3,6 +3,8 @@
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
   import { supabase } from '$lib/supabaseClient';
+  import { enforceAllowlist } from '$lib/session';
+  import { applyThemePreference } from '$lib/theme';
 
   const OAUTH_ERROR = 'Impossibile completare l’accesso con Google. Riprova più tardi.';
 
@@ -10,6 +12,7 @@
   let errorMessage = '';
 
   onMount(async () => {
+    applyThemePreference('light');
     const { data } = await supabase.auth.getSession();
     if (!data.session) return;
 
@@ -47,11 +50,11 @@
 </svelte:head>
 
 <main class="grid min-h-screen place-items-center p-4">
-  <section class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-    <h1 class="text-3xl font-bold text-slate-900">
+  <section class="w-full max-w-md rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 p-6 shadow-sm">
+    <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-100">
       <img src={`${base}/knowager-logo.png`} alt="Knowager" class="h-26 w-auto" />
     </h1>
-    <p class="mt-1 text-slate-600"></p>
+    <p class="mt-1 text-slate-600 dark:text-slate-300"></p>
 
     <button
       class="mt-5 w-full rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"

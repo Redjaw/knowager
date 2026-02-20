@@ -1,8 +1,9 @@
 import { browser } from '$app/environment';
 import { redirect } from '@sveltejs/kit';
 import { supabase } from '$lib/supabaseClient';
-import { enforceAllowlist } from '$lib/session';
+import { enforceAllowlist, getCurrentUser } from '$lib/session';
 import { base } from '$app/paths';
+import { normalizeThemePreference } from '$lib/theme';
 
 export async function load() {
   if (!browser) {
@@ -20,5 +21,12 @@ export async function load() {
     throw redirect(307, `${base}/login`);
   }
 
-  return { isAdmin: allow.admin };
+  const currentUser = await getCurrentUser();
+  const profileRes = currentUser
+    ? await supabase.from('profiles').select('theme').eq('id', currentUser.id).maybeSingle()
+    : { data: null, error: null };
+
+  const theme = normalizeThemePreference(profileRes.data?.theme);
+
+  return { isAdmin: allow.admin, theme };
 }

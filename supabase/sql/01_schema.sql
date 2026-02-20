@@ -10,6 +10,7 @@ create table if not exists public.profiles (
   last_name text,
   birth_date date,
   avatar_id text,
+  theme text not null default 'light' check (theme in ('light', 'dark')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
