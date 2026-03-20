@@ -11,10 +11,11 @@
   const weekdayLabels = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 
   let closures: Closure[] = [];
-  let newDay = '';
+  let rangeFrom = '';
+  let rangeTo = '';
+  let selectedDay = '';
   let newNote = '';
   let newColor: ClosureColor = 'gray';
-  let closureSearch = '';
   let warning = '';
   let message = '';
   let error = '';
@@ -56,19 +57,41 @@
     loading = false;
   }
 
-  async function addClosure() {
+  function getWeekdaysInRange(from: string, to: string): string[] {
+    const result: string[] = [];
+    const end = new Date(to + 'T00:00:00');
+    const cur = new Date(from + 'T00:00:00');
+    while (cur <= end) {
+      const dow = cur.getDay();
+      if (dow !== 0 && dow !== 6) {
+        result.push(toDateKey(cur));
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+    return result;
+  }
+
+  async function addClosures() {
     message = '';
     error = '';
-    if (!newDay) return;
+    if (!rangeFrom) return;
 
-    const { error: insertError } = await supabase.from('closures').upsert({ day: newDay, note: newNote || null, color: newColor });
+    const days = getWeekdaysInRange(rangeFrom, rangeTo || rangeFrom);
+    if (days.length === 0) {
+      error = 'Nessun giorno feriale nel range selezionato.';
+      return;
+    }
+
+    const rows = days.map((day) => ({ day, note: newNote || null, color: newColor }));
+    const { error: insertError } = await supabase.from('closures').upsert(rows);
     if (insertError) {
       error = insertError.message;
       return;
     }
 
-    message = 'Chiusura salvata.';
-    newDay = '';
+    message = days.length === 1 ? 'Chiusura salvata.' : `${days.length} chiusure salvate.`;
+    rangeFrom = '';
+    rangeTo = '';
     newNote = '';
     newColor = 'gray';
     await loadAll();
@@ -80,6 +103,7 @@
       error = deleteError.message;
       return;
     }
+    if (selectedDay === day) selectedDay = '';
     await loadAll();
   }
 
@@ -93,6 +117,12 @@
     if (color === 'yellow') return 'bg-amber-100 text-amber-800 border-amber-200';
     if (color === 'red') return 'bg-red-100 text-red-800 border-red-200';
     return 'bg-slate-100 text-slate-700 border-slate-200';
+  }
+
+  function colorDotClass(color: ClosureColor | null) {
+    if (color === 'yellow') return 'bg-amber-500';
+    if (color === 'red') return 'bg-red-500';
+    return 'bg-slate-500';
   }
 
   function toDateKey(value: Date) {
@@ -119,7 +149,9 @@
   }
 
   function selectCalendarDay(day: string) {
-    newDay = day;
+    selectedDay = day;
+    rangeFrom = day;
+    rangeTo = '';
     const closure = closureByDay(day);
     if (closure) {
       newNote = closure.note ?? '';
@@ -127,23 +159,8 @@
     }
   }
 
-
-  function jumpToClosureMonth(day: string) {
-    const [yearValue, monthValue] = day.split('-').map((value) => Number(value));
-    if (!yearValue || !monthValue) return;
-    calendarCursor = new Date(yearValue, monthValue - 1, 1);
-    selectCalendarDay(day);
-  }
-
-  function filteredClosures() {
-    const normalizedQuery = closureSearch.trim().toLowerCase();
-    if (!normalizedQuery) return closures;
-
-    return closures.filter((closure) => {
-      const day = closure.day.toLowerCase();
-      const note = (closure.note ?? '').toLowerCase();
-      return day.includes(normalizedQuery) || note.includes(normalizedQuery);
-    });
+  function selectListClosure(day: string) {
+    selectedDay = day;
   }
 
   function buildCalendarCells(cursor: Date) {
@@ -236,10 +253,29 @@
 
       <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-2xl font-semibold text-slate-900">Chiusure calendario</h2>
-        <p class="mb-4 text-slate-600">Puoi selezionare una data dal mini calendario e gestire più facilmente molte chiusure.</p>
+        <p class="mb-4 text-slate-600">Seleziona un giorno o un intervallo di date. I weekend vengono esclusi automaticamente.</p>
 
-        <form class="mb-6 grid gap-3 md:grid-cols-[180px_1fr_150px_auto]" on:submit|preventDefault={addClosure}>
-          <input class="rounded-xl border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2" type="date" bind:value={newDay} required />
+        <form class="mb-6 grid gap-3 sm:grid-cols-[auto_auto_1fr_auto_auto]" on:submit|preventDefault={addClosures}>
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-slate-600 whitespace-nowrap" for="range-from">Dal</label>
+            <input
+              id="range-from"
+              class="rounded-xl border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2"
+              type="date"
+              bind:value={rangeFrom}
+              required
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-slate-600 whitespace-nowrap" for="range-to">Al</label>
+            <input
+              id="range-to"
+              class="rounded-xl border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2"
+              type="date"
+              bind:value={rangeTo}
+              min={rangeFrom}
+            />
+          </div>
           <input class="rounded-xl border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2" placeholder="Motivo (es. Ferragosto)" bind:value={newNote} />
           <select class="rounded-xl border border-slate-300 px-3 py-2 text-slate-900 outline-none ring-blue-500 transition focus:ring-2" bind:value={newColor}>
             <option value="gray">Grigio</option>
@@ -249,57 +285,8 @@
           <button class="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-700" type="submit">Aggiungi</button>
         </form>
 
-        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div>
-            <div class="mb-3 flex items-center justify-between">
-              <h3 class="text-lg font-semibold text-slate-900">Elenco mese corrente</h3>
-              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{selectedMonthClosures().length} chiusure</span>
-            </div>
-            <ul class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50/60 px-3">
-              {#if selectedMonthClosures().length === 0}
-                <li class="py-3 text-slate-500">Nessuna chiusura nel mese selezionato.</li>
-              {:else}
-                {#each selectedMonthClosures() as closure}
-                  <li class="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-                    <button class="text-left" type="button" on:click={() => selectCalendarDay(closure.day)}>
-                      <p class="font-medium text-slate-900">{closure.day}</p>
-                      <p class="text-sm text-slate-600">{closure.note?.trim() ? closure.note : 'Nessun motivo specificato'}</p>
-                      <span class={`mt-1 inline-flex w-fit rounded-full border px-2 py-0.5 text-xs font-semibold ${colorBadgeClass(closure.color)}`}>Colore: {colorLabel(closure.color)}</span>
-                    </button>
-                    <button type="button" class="w-fit rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50" on:click={() => removeClosure(closure.day)}>Rimuovi</button>
-                  </li>
-                {/each}
-              {/if}
-            </ul>
-
-            <div class="mt-5 rounded-xl border border-slate-200 bg-white p-4">
-              <div class="mb-3 flex items-center justify-between gap-3">
-                <h4 class="text-sm font-semibold text-slate-900">Tutte le chiusure</h4>
-                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{filteredClosures().length}</span>
-              </div>
-              <input
-                class="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none ring-blue-500 transition focus:ring-2"
-                placeholder="Cerca per data o motivo (es. 2026-08, ferragosto)"
-                bind:value={closureSearch}
-              />
-              <ul class="max-h-56 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/60 px-3">
-                {#if filteredClosures().length === 0}
-                  <li class="py-3 text-sm text-slate-500">Nessuna chiusura trovata.</li>
-                {:else}
-                  {#each filteredClosures() as closure}
-                    <li class="flex items-center justify-between gap-3 py-2">
-                      <button type="button" class="text-left" on:click={() => jumpToClosureMonth(closure.day)}>
-                        <p class="text-sm font-medium text-slate-900">{closure.day}</p>
-                        <p class="text-xs text-slate-600">{closure.note?.trim() ? closure.note : 'Nessun motivo specificato'}</p>
-                      </button>
-                      <button type="button" class="rounded-lg border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50" on:click={() => removeClosure(closure.day)}>Rimuovi</button>
-                    </li>
-                  {/each}
-                {/if}
-              </ul>
-            </div>
-          </div>
-
+        <div class="grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+          <!-- Calendario principale -->
           <div class="rounded-xl border border-slate-200 bg-white p-4">
             <div class="mb-3 flex items-center justify-between">
               <button class="h-8 w-8 rounded-full text-xl text-blue-700 transition hover:bg-blue-50" type="button" on:click={previousMonth} aria-label="Mese precedente">‹</button>
@@ -315,18 +302,55 @@
 
             <div class="grid grid-cols-7 gap-1">
               {#each visibleCalendarCells as cell}
+                {@const isSelected = selectedDay === cell.day}
                 <button
                   type="button"
-                  class={`relative h-10 rounded-lg border text-xs font-medium transition ${cell.inMonth ? 'border-slate-200 text-slate-700 hover:bg-slate-50' : 'border-transparent text-slate-300'} ${cell.isToday ? 'ring-2 ring-blue-300' : ''} ${newDay === cell.day ? 'border-blue-500 bg-blue-50 text-blue-700' : ''}`}
+                  class={`relative h-11 rounded-lg border text-xs font-medium transition
+                    ${cell.inMonth ? 'border-slate-200 text-slate-700 hover:bg-slate-50' : 'border-transparent text-slate-300'}
+                    ${cell.isToday && !isSelected ? 'ring-2 ring-blue-300' : ''}
+                    ${isSelected ? 'border-blue-500 bg-blue-600 text-white hover:bg-blue-700' : ''}
+                  `}
                   on:click={() => selectCalendarDay(cell.day)}
                 >
                   <span>{cell.dateNumber}</span>
                   {#if cell.closure}
-                    <span class={`absolute bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full ${cell.closure.color === 'yellow' ? 'bg-amber-500' : cell.closure.color === 'red' ? 'bg-red-500' : 'bg-slate-500'}`}></span>
+                    <span class={`absolute bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full ${isSelected ? 'bg-white/80' : colorDotClass(cell.closure.color)}`}></span>
                   {/if}
                 </button>
               {/each}
             </div>
+          </div>
+
+          <!-- Lista chiusure del mese visibile -->
+          <div>
+            <div class="mb-3 flex items-center justify-between">
+              <h3 class="text-lg font-semibold capitalize text-slate-900">{visibleMonthLabel}</h3>
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{selectedMonthClosures().length} chiusure</span>
+            </div>
+            <ul class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50/60 px-3">
+              {#if selectedMonthClosures().length === 0}
+                <li class="py-4 text-slate-500">Nessuna chiusura nel mese selezionato.</li>
+              {:else}
+                {#each selectedMonthClosures() as closure}
+                  {@const isHighlighted = selectedDay === closure.day}
+                  <li
+                    class={`flex flex-col gap-2 rounded-lg px-2 py-3 transition sm:flex-row sm:items-center sm:justify-between
+                      ${isHighlighted ? 'bg-blue-50 ring-1 ring-blue-200' : ''}
+                    `}
+                  >
+                    <button class="flex items-center gap-3 text-left" type="button" on:click={() => selectListClosure(closure.day)}>
+                      <span class={`mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ${colorDotClass(closure.color)}`}></span>
+                      <div>
+                        <p class={`font-medium ${isHighlighted ? 'text-blue-900' : 'text-slate-900'}`}>{closure.day}</p>
+                        <p class="text-sm text-slate-600">{closure.note?.trim() ? closure.note : 'Nessun motivo specificato'}</p>
+                        <span class={`mt-1 inline-flex w-fit rounded-full border px-2 py-0.5 text-xs font-semibold ${colorBadgeClass(closure.color)}`}>{colorLabel(closure.color)}</span>
+                      </div>
+                    </button>
+                    <button type="button" class="w-fit rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50" on:click={() => removeClosure(closure.day)}>Rimuovi</button>
+                  </li>
+                {/each}
+              {/if}
+            </ul>
           </div>
         </div>
       </article>
