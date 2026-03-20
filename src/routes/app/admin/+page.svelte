@@ -24,11 +24,11 @@
   let calendarCursor = new Date(initialDate.getFullYear(), initialDate.getMonth(), 1);
   let visibleMonthLabel = '';
   let visibleMonthPrefix = '';
-  let visibleCalendarCells: ReturnType<typeof buildCalendarCells> = [];
+  let visibleCalendarCells: { day: string; dateNumber: number; inMonth: boolean; isToday: boolean; closure: Closure | undefined }[] = [];
 
   $: visibleMonthLabel = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' }).format(calendarCursor);
   $: visibleMonthPrefix = `${calendarCursor.getFullYear()}-${`${calendarCursor.getMonth() + 1}`.padStart(2, '0')}`;
-  $: visibleCalendarCells = buildCalendarCells(calendarCursor);
+  $: visibleCalendarCells = buildCalendarCells(calendarCursor, closures);
 
   onMount(async () => {
     const allow = await enforceAllowlist();
@@ -161,9 +161,16 @@
 
   function selectListClosure(day: string) {
     selectedDay = day;
+    rangeFrom = day;
+    rangeTo = '';
+    const closure = closureByDay(day);
+    if (closure) {
+      newNote = closure.note ?? '';
+      newColor = closure.color ?? 'gray';
+    }
   }
 
-  function buildCalendarCells(cursor: Date) {
+  function buildCalendarCells(cursor: Date, closureList: Closure[]) {
     const currentYear = cursor.getFullYear();
     const currentMonth = cursor.getMonth();
     const firstDay = new Date(currentYear, currentMonth, 1);
@@ -180,7 +187,7 @@
         dateNumber: date.getDate(),
         inMonth: date.getMonth() === currentMonth,
         isToday: day === toDateKey(new Date()),
-        closure: closureByDay(day)
+        closure: closureList.find((c) => c.day === day)
       };
     });
   }
