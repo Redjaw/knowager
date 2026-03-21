@@ -144,8 +144,11 @@
     return closures.find((closure) => closure.day === day);
   }
 
-  function selectedMonthClosures() {
-    return closures.filter((closure) => closure.day.startsWith(visibleMonthPrefix));
+  $: selectedMonthClosures = buildMonthClosures(calendarCursor, closures);
+
+  function buildMonthClosures(cursor: Date, allClosures: Closure[]) {
+    const prefix = `${cursor.getFullYear()}-${`${cursor.getMonth() + 1}`.padStart(2, '0')}`;
+    return allClosures.filter((c) => c.day.startsWith(prefix));
   }
 
   function selectCalendarDay(day: string) {
@@ -156,6 +159,11 @@
     if (closure) {
       newNote = closure.note ?? '';
       newColor = closure.color ?? 'gray';
+    }
+    const [year, month] = day.split('-').map(Number);
+    const dayMonth = new Date(year, month - 1, 1);
+    if (dayMonth.getFullYear() !== calendarCursor.getFullYear() || dayMonth.getMonth() !== calendarCursor.getMonth()) {
+      calendarCursor = dayMonth;
     }
   }
 
@@ -332,13 +340,13 @@
           <div>
             <div class="mb-3 flex items-center justify-between">
               <h3 class="text-lg font-semibold capitalize text-slate-900">{visibleMonthLabel}</h3>
-              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{selectedMonthClosures().length} chiusure</span>
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{selectedMonthClosures.length} chiusure</span>
             </div>
             <ul class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50/60 px-3">
-              {#if selectedMonthClosures().length === 0}
+              {#if selectedMonthClosures.length === 0}
                 <li class="py-4 text-slate-500">Nessuna chiusura nel mese selezionato.</li>
               {:else}
-                {#each selectedMonthClosures() as closure}
+                {#each selectedMonthClosures as closure}
                   {@const isHighlighted = selectedDay === closure.day}
                   <li
                     class={`flex flex-col gap-2 rounded-lg px-2 py-3 transition sm:flex-row sm:items-center sm:justify-between
