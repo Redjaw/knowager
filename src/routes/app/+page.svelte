@@ -395,12 +395,30 @@
             {/if}
 
             <div class="mt-auto border-t border-slate-200 pt-3">
-              <div class="mt-2 flex items-center">
-                {#if members.length === 0 && !disabled}
+              {#if members.length === 0 && !disabled}
+                <div class="mt-2">
                   <span class="grid h-8 w-8 place-items-center rounded-full border border-dashed border-slate-300 text-slate-400">+</span>
-                {:else if members.length === 0 && disabled}
+                </div>
+              {:else if members.length === 0 && disabled}
+                <div class="mt-2">
                   <span class="grid h-8 w-8 place-items-center rounded-full border border-slate-300 text-slate-400">-</span>
-                {:else}
+                </div>
+              {:else}
+                <!-- Mobile: lista verticale avatar + nome -->
+                <div class="mt-2 flex flex-col gap-1 sm:hidden">
+                  {#each members.slice(0, 8) as member}
+                    {@const profile = profiles.get(member.user_id)}
+                    <div class="flex items-center gap-2">
+                      <img class="h-8 w-8 shrink-0 rounded-full border-2 border-white" src={gravatarUrl(profile?.email, 64)} alt={profileName(profile)} title={profileName(profile)} />
+                      <span class="truncate text-xs font-medium text-slate-700">{profileName(profile)}</span>
+                    </div>
+                  {/each}
+                  {#if members.length > 8}
+                    <span class="text-xs font-medium text-slate-500">+{members.length - 8} altri</span>
+                  {/if}
+                </div>
+                <!-- Desktop: avatar sovrapposti -->
+                <div class="mt-2 hidden items-center sm:flex">
                   {#each members.slice(0, 8) as member}
                     {@const profile = profiles.get(member.user_id)}
                     <img class="-ml-2 h-8 w-8 rounded-full border-2 border-white first:ml-0" src={gravatarUrl(profile?.email, 64)} alt={profileName(profile)} title={profileName(profile)} />
@@ -408,8 +426,8 @@
                   {#if members.length > 8}
                     <span class="-ml-2 grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-blue-600 text-xs font-semibold text-white">+{members.length - 8}</span>
                   {/if}
-                {/if}
-              </div>
+                </div>
+              {/if}
             </div>
           </button>
         {/each}
